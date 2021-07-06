@@ -13,7 +13,6 @@ import {Overlay} from 'react-native-elements';
 import {useDispatch, useSelector} from 'react-redux';
 import {Addreeldata, setChange} from '../actions';
 import {db} from '../Security/firebase';
-import {launchCamera} from 'react-native-image-picker';
 import ImagePicker from 'react-native-image-crop-picker';
 
 function Footer({navigation}) {

@@ -21,7 +21,6 @@ import {Addreel, Addreelupdate, Adduser, reelNameAction} from '../actions.js';
 import {useFocusEffect} from '@react-navigation/native';
 import Footer from '../Screens/Footer.js';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 const wait = timeout => {
   return new Promise(resolve => setTimeout(resolve, timeout));
 };

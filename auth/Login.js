@@ -139,14 +139,16 @@ export default function Login({navigation}) {
             source={require('../assets/shoto.png')}
             style={styles.shotologo}
           />
-          <Text style={styles.shoto}>Welcome to Shoto.click</Text>
+          <Text style={styles.shoto}>
+            Shotography: The Art of Clicking Together
+          </Text>
 
           <TouchableOpacity
             activeOpacity={0.9}
             style={styles.button}
             onPress={signInWithGoogleAsync}>
             <Image
-              source={require('../assets/googlelogo.png')}
+              source={require('../assets/google.png')}
               style={styles.googlelogo}
             />
             <Text style={styles.text}>Login With Google</Text>
@@ -185,7 +187,7 @@ const styles = StyleSheet.create({
   },
   shoto: {
     color: 'grey',
-    fontSize: 18,
+    fontSize: 14,
     margin: 18,
   },
   googlelogo: {

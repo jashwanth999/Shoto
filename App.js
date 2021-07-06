@@ -6,7 +6,6 @@ import {LogBox} from 'react-native';
 import {Provider} from 'react-redux';
 import {store} from './store.js';
 import * as Sentry from '@sentry/react-native';
-
 Sentry.init({
   dsn: 'https://examplePublicKey@o0.ingest.sentry.io/0',
 });

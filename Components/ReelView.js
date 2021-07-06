@@ -24,6 +24,8 @@ import {db} from '../Security/firebase.js';
 import * as FileSystem from 'expo-file-system';
 import Footer2 from '../Screens/Footer2.js';
 import {useFocusEffect} from '@react-navigation/native';
+import FastImage from 'react-native-fast-image';
+
 export default function ReelView({navigation}) {
   let onEndReacheMomentum = false;
   const [flatRef, setFlatRef] = useState();
@@ -32,6 +34,7 @@ export default function ReelView({navigation}) {
   const [startAfter, setstartAfter] = useState(null);
   const [data, setData] = useState([]);
   const [spinner, setSpinner] = useState(false);
+  const trigger = useSelector(state => state.searchTrigger.searchHeader);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -78,6 +81,7 @@ export default function ReelView({navigation}) {
         } else {
           setstartAfter(null);
         }
+
         dispatch(
           Addreelimages(
             snapshot.docs.map(doc => ({
@@ -129,6 +133,7 @@ export default function ReelView({navigation}) {
         uploadername={item.reelimages?.uploadername}
         useremail={reeldata.useremail}
         profilepic={item.reelimages?.profilepic}
+        trigger={trigger}
       />
     );
   }, []);
@@ -138,6 +143,7 @@ export default function ReelView({navigation}) {
         url={item.reelimages?.imageurl}
         index={index}
         localimage={item.localimage}
+        trigger={trigger}
       />
     );
   }, []);
@@ -165,6 +171,7 @@ export default function ReelView({navigation}) {
               setstartAfter(lastdata);
             } else setstartAfter(null);
             setSpinner(false);
+
             dispatch(
               Addreelimages([
                 ...reelimages,

@@ -17,9 +17,12 @@ export default function imagecard({
   t,
   url,
   profilepic,
+  trigger,
+  len,
 }) {
-  const [loadEnd, setLoadEnd] = useState(true);
+  const [loadEnd, setLoadEnd] = useState(false);
   const Image = createImageProgress(FastImage);
+
   return (
     <View>
       <TouchableOpacity
@@ -37,17 +40,17 @@ export default function imagecard({
         }
         style={styles.imagecard}>
         <FastImage
-          onLoadEnd={() => {
-            setLoadEnd(false);
+          onError={() => {
+            setLoadEnd(true);
+            console.log('true');
           }}
-         
-          style={[styles.backgroundImage]}
+          style={styles.backgroundImage}
           source={{
             uri: url,
             priority: FastImage.priority.low,
+         
           }}
         />
-
         <View style={styles.imagecardfooter}>
           <View style={{flexDirection: 'row'}}>
             <Avatar
