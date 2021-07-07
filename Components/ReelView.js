@@ -10,7 +10,7 @@ import {
   BackHandler,
 } from 'react-native';
 import {Header} from 'react-native-elements';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import { Ionicons } from '../Styles/Icons.js';
 import Imagecard from './Imagecard.js';
 import Thumbnail from './Thumbnail.js';
 import {useSelector, useDispatch} from 'react-redux';
@@ -24,7 +24,6 @@ import {db} from '../Security/firebase.js';
 import * as FileSystem from 'expo-file-system';
 import Footer2 from '../Screens/Footer2.js';
 import {useFocusEffect} from '@react-navigation/native';
-import FastImage from 'react-native-fast-image';
 
 export default function ReelView({navigation}) {
   let onEndReacheMomentum = false;
@@ -35,6 +34,9 @@ export default function ReelView({navigation}) {
   const [data, setData] = useState([]);
   const [spinner, setSpinner] = useState(false);
   const trigger = useSelector(state => state.searchTrigger.searchHeader);
+
+  // android back button goes to home screen
+
 
   useFocusEffect(
     React.useCallback(() => {
@@ -52,7 +54,6 @@ export default function ReelView({navigation}) {
 
   const yof = useSelector(state => state.y.y);
 
-  // get Y coordinates of image card  stored in reducers
 
   // get images of reels stored in reducers
 

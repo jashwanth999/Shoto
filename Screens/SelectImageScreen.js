@@ -9,8 +9,8 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import {Header} from 'react-native-elements';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+
+import { Ionicons,MaterialIcons } from '../Styles/Icons';
 import SelectImageReelList from '../Components/SelectImageReelList';
 import {db} from '../Security/firebase';
 import {useSelector} from 'react-redux';

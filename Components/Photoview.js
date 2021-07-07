@@ -1,6 +1,6 @@
 import React from "react";
 import { View,  StyleSheet} from "react-native";
-import  Ionicons  from "react-native-vector-icons/Ionicons";
+import { Ionicons } from "../Styles/Icons";
 import FastImage from "react-native-fast-image";
 import ReactNativeZoomableView from "@dudigital/react-native-zoomable-view/src/ReactNativeZoomableView";
 export default function Photoview({ navigation, route }) {

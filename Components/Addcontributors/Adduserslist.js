@@ -10,8 +10,7 @@ import {
   ScrollView,
 } from "react-native";
 import { Header } from "react-native-elements";
-import  MaterialCommunityIcons  from "react-native-vector-icons/MaterialCommunityIcons";
-import  Ionicons  from "react-native-vector-icons/Ionicons";
+import { Ionicons,MaterialCommunityIcons } from "../../Styles/Icons";
 import Userlist from "./Userlist";
 import { db } from "../../Security/firebase";
 import { useSelector, useDispatch } from "react-redux";

@@ -1,31 +1,31 @@
 import React, {useEffect, useState} from 'react';
 import {View, StyleSheet, Text, TouchableOpacity} from 'react-native';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import {MaterialIcons} from '../Styles/Icons.js';
 import {useDispatch} from 'react-redux';
 import {Addreeldata} from '../actions.js';
 import {db, auth} from '../Security/firebase.js';
 import * as FileSystem from 'expo-file-system';
 import FastImage from 'react-native-fast-image';
 import ImagePicker from 'react-native-image-crop-picker';
-import {createImageProgress} from 'react-native-image-progress';
 
 export default function Reellist({navigation, name, id, t}) {
-  const Image = createImageProgress(FastImage);
   const dispatch = useDispatch();
   const [reelusers, setreelusers] = useState([]);
   const [images, setimages] = useState([]);
   const user = auth.currentUser;
 
   useEffect(() => {
-    const unsubscribe = db
-      .collection('reels')
-      .doc(id)
-      .collection('reelusers')
-      .where('useremail', '!=', user?.email)
-      .onSnapshot(snapshot => {
-        setreelusers(snapshot.docs.map(doc => doc.data()));
-      });
-    return unsubscribe;
+    if (user.email) {
+      const unsubscribe = db
+        .collection('reels')
+        .doc(id)
+        .collection('reelusers')
+        .where('useremail', '!=', user?.email)
+        .onSnapshot(snapshot => {
+          setreelusers(snapshot.docs.map(doc => doc.data()));
+        });
+      return unsubscribe;
+    }
   }, [id]);
   useEffect(() => {
     const unsubscribe = db

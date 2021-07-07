@@ -1,10 +1,9 @@
 import React, {useState} from 'react';
 import {View, StyleSheet, Text} from 'react-native';
-import Octicons from 'react-native-vector-icons/Octicons';
+import {Octicons} from '../Styles/Icons';
 import {TouchableOpacity} from 'react-native';
 import {Avatar} from 'react-native-elements/dist/avatar/Avatar';
 import FastImage from 'react-native-fast-image';
-import {createImageProgress} from 'react-native-image-progress';
 
 export default function imagecard({
   navigation,
@@ -17,11 +16,8 @@ export default function imagecard({
   t,
   url,
   profilepic,
-  trigger,
-  len,
 }) {
   const [loadEnd, setLoadEnd] = useState(false);
-  const Image = createImageProgress(FastImage);
 
   return (
     <View>
@@ -48,7 +44,6 @@ export default function imagecard({
           source={{
             uri: url,
             priority: FastImage.priority.low,
-         
           }}
         />
         <View style={styles.imagecardfooter}>
@@ -56,9 +51,7 @@ export default function imagecard({
             <Avatar
               rounded
               source={{
-                uri: profilepic
-                  ? profilepic
-                  : 'https://res.cloudinary.com/jashwanth/image/upload/v1624182501/60111_nihqdw.jpg',
+                uri: profilepic,
               }}
             />
             <View style={styles.left}>

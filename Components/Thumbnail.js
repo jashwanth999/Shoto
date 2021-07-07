@@ -10,7 +10,6 @@ export default function Thumbnail({index, url, trigger}) {
     // storing index in reducers for onClick scroll to image
     dispatch(setindex(index));
   };
- 
 
   return (
     <View style={{marginBottom: 4}}>

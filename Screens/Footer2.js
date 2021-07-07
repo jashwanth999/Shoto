@@ -1,7 +1,6 @@
 import React from 'react';
 import {StyleSheet, View, TouchableOpacity, Text} from 'react-native';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import { MaterialCommunityIcons,MaterialIcons } from '../Styles/Icons';
 import ImagePicker from 'react-native-image-crop-picker';
 function Footer2({navigation}) {
   const takePhoto2 = async () => {

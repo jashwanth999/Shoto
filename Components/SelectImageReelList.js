@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import { MaterialIcons } from '../Styles/Icons.js';
 import {useDispatch} from 'react-redux';
 import {Addreeldata, clearScrollData, setindex} from '../actions.js';
 import {db, auth} from '../Security/firebase.js';

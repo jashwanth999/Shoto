@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import  Ionicons  from "react-native-vector-icons/Ionicons";
+import { Ionicons } from "../../Styles/Icons";
 import { useSelector } from "react-redux";
 import { db } from "../../Security/firebase";
 export default function Userlist({ useremail, admin }) {
