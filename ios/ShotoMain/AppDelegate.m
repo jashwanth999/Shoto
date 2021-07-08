@@ -23,6 +23,9 @@ static void InitializeFlipper(UIApplication *application) {
 }
 #endif
 
+@import Firebase;
+@import GoogleSignIn;
+
 @implementation AppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
@@ -47,6 +50,12 @@ static void InitializeFlipper(UIApplication *application) {
   rootViewController.view = rootView;
   self.window.rootViewController = rootViewController;
   [self.window makeKeyAndVisible];
+  
+  // For firebase integration
+  // [GIDSignIn sharedInstance].clientID = [FIRApp defaultApp].options.clientID;
+  // [GIDSignIn sharedInstance].delegate = self;
+  [FIRApp configure];
+  // 
   return YES;
 }
 
