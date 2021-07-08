@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import {db, auth} from '../Security/firebase.js';
 import {useSelector, useDispatch} from 'react-redux';
-import {clearScrollData, setindex, setSearchHeader} from '../actions.js';
+import {clearScrollData, setindex} from '../actions.js';
 import {RNS3} from 'react-native-aws3';
 import * as Sentry from '@sentry/react-native';
 import FastImage from 'react-native-fast-image';
@@ -19,7 +19,6 @@ export default function Reelcamerapost({navigation, route}) {
 
   const currentUser = auth.currentUser;
   const dispatch = useDispatch();
-  const [act, setAct] = useState(true);
   const user = useSelector(state => state.user.user);
   const reeldata = useSelector(state => state.reeldata.reeldata);
   const file = {
@@ -37,63 +36,58 @@ export default function Reelcamerapost({navigation, route}) {
     successActionStatus: 201,
   };
   const upload = () => {
-    navigation.navigate('ReelView');
-    dispatch(setSearchHeader(true));
-    db.collection('reels')
-      .doc(reeldata.reelid)
-      .collection('reelimages')
-      .add({
-        uploadedby: user.email,
-        imageurl: image,
-        uploaderpropic: user.profilepic,
-        timestamp: new Date(),
-        uploadername: user.username,
-        profilepic: user.profilepic,
-      })
-      .then(res => {
-        dispatch(clearScrollData());
-        dispatch(setindex(0));
-        dispatch(setSearchHeader(false));
-
-        try {
-          RNS3.put(file, options).then(response => {
-            if (response.status !== 201) {
-              alert('Some error occurred');
-            } else {
-              db.collection('reels')
-                .doc(reeldata.reelid)
-                .collection('reelimages')
-                .doc(res.id)
-                .update({
-                  imageurl: response.body.postResponse.location,
-                });
-            }
-          });
-        } catch (err) {
-          Sentry.captureException(err);
-        }
-      });
+    try {
+      navigation.navigate('ReelView');
+      db.collection('reels')
+        .doc(reeldata.reelid)
+        .collection('reelimages')
+        .add({
+          uploadedby: user.email,
+          imageurl: image,
+          uploaderpropic: user.profilepic,
+          timestamp: new Date(),
+          uploadername: user.username,
+          profilepic: user.profilepic,
+        })
+        .then(res => {
+          dispatch(clearScrollData());
+          dispatch(setindex(0));
+          try {
+            RNS3.put(file, options).then(response => {
+              if (response.status !== 201) {
+                alert('Some error occurred');
+              } else {
+                db.collection('reels')
+                  .doc(reeldata.reelid)
+                  .collection('reelimages')
+                  .doc(res.id)
+                  .update({
+                    imageurl: response.body.postResponse.location,
+                  });
+              }
+            });
+          } catch (err) {
+            Sentry.captureException(err);
+          }
+        });
+    } catch (error) {
+      console.log(error);
+    }
   };
   return (
     <View style={styles.container}>
-      {act ? (
-        <View style={styles.container}>
-          <FastImage
-            style={{flex: 1}}
-            source={{uri: image}}
-            resizeMode={FastImage.resizeMode.contain}
-          />
-          <View style={styles.uploadview}>
-            <TouchableOpacity style={styles.uploadbutton} onPress={upload}>
-              <Text style={styles.text}>Upload</Text>
-            </TouchableOpacity>
-          </View>
+      <View style={styles.container}>
+        <FastImage
+          style={{flex: 1}}
+          source={{uri: image}}
+          resizeMode={FastImage.resizeMode.contain}
+        />
+        <View style={styles.uploadview}>
+          <TouchableOpacity style={styles.uploadbutton} onPress={upload}>
+            <Text style={styles.text}>Upload</Text>
+          </TouchableOpacity>
         </View>
-      ) : (
-        <View style={styles.actcontainer}>
-          <ActivityIndicator size="large" color="white" />
-        </View>
-      )}
+      </View>
     </View>
   );
 }

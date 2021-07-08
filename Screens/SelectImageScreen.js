@@ -9,8 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import {Header} from 'react-native-elements';
-
-import { Ionicons,MaterialIcons } from '../Styles/Icons';
+import {Ionicons, MaterialIcons} from '../Styles/Icons';
 import SelectImageReelList from '../Components/SelectImageReelList';
 import {db} from '../Security/firebase';
 import {useSelector} from 'react-redux';
@@ -21,7 +20,6 @@ export default function SelectImageScreen({navigation, route}) {
   const [reels, setReels] = useState([]);
   const [startAfter, setStartAfter] = useState(null);
   const [LastPosition, setLastPosition] = useState(false);
-  const [spinner, setSpinner] = useState(false);
   const [isLoading, setisLoading] = useState(false);
   useEffect(() => {
     let mounted = true;
@@ -140,7 +138,6 @@ export default function SelectImageScreen({navigation, route}) {
           }
           keyExtractor={item => item.id}
           onEndReached={() => {
-            setSpinner(true);
             fetchReelListMore().then(snapshot => {
               if (snapshot && !LastPosition) {
                 snapshot.docs.length < 5
@@ -154,7 +151,7 @@ export default function SelectImageScreen({navigation, route}) {
                 }
 
                 setisLoading(true);
-                setSpinner(false);
+
                 setReels([
                   ...reels,
                   ...snapshot.docs.map(doc => ({

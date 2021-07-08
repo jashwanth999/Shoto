@@ -10,15 +10,17 @@ import {
 import {Ionicons, MaterialCommunityIcons} from '../Styles/Icons';
 import {Overlay} from 'react-native-elements';
 import {useDispatch, useSelector} from 'react-redux';
-import {Addreeldata} from '../actions';
+import {Addreeldata, setChange} from '../actions';
 import {db} from '../Security/firebase';
 import ImagePicker from 'react-native-image-crop-picker';
-
+import firebase from '@firebase/app';
 function Footer({navigation}) {
   const dispatch = useDispatch();
 
   const changed = useSelector(state => state.changed.changed);
-  // user deatails
+
+  // user details
+
   const user = useSelector(state => state.user.user);
 
   //  list of all reel names of a user
@@ -38,18 +40,18 @@ function Footer({navigation}) {
     // checking whether the reelname is previously used or not
 
     if (!reelnames.includes(reelname.toLowerCase())) {
-      setact(true);
-
       try {
+        setact(true);
         db.collection('user_reels')
           .doc(user.email)
           .collection('reellist')
           .add({
             reelname: reelname,
-            timestamp: new Date(),
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
           })
           .then(res => {
             setact(false);
+            navigation.navigate('Adduserlist');
             dispatch(
               Addreeldata({
                 useremail: user.email,
@@ -58,12 +60,13 @@ function Footer({navigation}) {
                 username: user.username,
               }),
             );
-            navigation.navigate('Adduserlist');
+
             toggleOverlay();
+
             db.collection('reels').doc(res.id).set({
               created_useremail: user.email,
               reelname: reelname,
-              created_at: new Date(),
+              created_at: firebase.firestore.FieldValue.serverTimestamp(),
             });
             db.collection('reels')
               .doc(res.id)
@@ -72,14 +75,13 @@ function Footer({navigation}) {
               .set({
                 useremail: user.email,
                 reelid: res.id,
-                timestamp: new Date(),
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                 profilepic: user.profilepic,
               });
 
-            // dispatch(setChange(!changed));
+            dispatch(setChange(!changed));
           });
       } catch (error) {
-        alert(error.message);
         setact(false);
         toggleOverlay();
       }

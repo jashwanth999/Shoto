@@ -1,7 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import {
   View,
-  Image,
   StyleSheet,
   ScrollView,
   Text,
@@ -22,7 +21,9 @@ export default function ImageView({navigation, route}) {
   const [comment, setComment] = useState('');
   const dispatch = useDispatch();
   const submitcomment = () => {
+
     // sending comments to images which stored in reels -> reelimages
+
     try {
       db.collection('reels')
         .doc(reelid)
@@ -39,6 +40,7 @@ export default function ImageView({navigation, route}) {
           timestamp: new Date(),
         })
         .then(() => {
+          
           //updating comments length at the same time
 
           db.collection('reels')
@@ -101,7 +103,11 @@ export default function ImageView({navigation, route}) {
         </View>
         <View style={styles.titleview}>
           <Text style={{color: '#D7DBDD', fontSize: 16}}>{uploadername}</Text>
-          <Text style={{color: '#D7DBDD', fontSize: 16}}>{t}</Text>
+          <Text style={{color: '#D7DBDD', fontSize: 16}}>
+            {' '}
+            {t.split(' ')[1]} {t.split(' ')[2]} {t.split(' ')[3]}{' '}
+            {t.split(' ')[4]}
+          </Text>
         </View>
         <TextInput
           value={comment}

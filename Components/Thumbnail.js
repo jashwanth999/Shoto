@@ -1,13 +1,15 @@
 import React, {useState} from 'react';
-import {TouchableOpacity, Image, View} from 'react-native';
+import {TouchableOpacity, View} from 'react-native';
 import {useDispatch} from 'react-redux';
 import {setindex} from '../actions';
 import FastImage from 'react-native-fast-image';
-export default function Thumbnail({index, url, trigger}) {
+export default function Thumbnail({index, url}) {
   const [loadEnd, setLoadEnd] = useState(true);
   const dispatch = useDispatch();
   const scroll = () => {
+
     // storing index in reducers for onClick scroll to image
+
     dispatch(setindex(index));
   };
 

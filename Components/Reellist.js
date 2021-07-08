@@ -1,21 +1,25 @@
 import React, {useEffect, useState} from 'react';
 import {View, StyleSheet, Text, TouchableOpacity} from 'react-native';
 import {MaterialIcons} from '../Styles/Icons.js';
-import {useDispatch} from 'react-redux';
-import {Addreeldata} from '../actions.js';
+import {useDispatch, useSelector} from 'react-redux';
+import {Addreeldata, setindex} from '../actions.js';
 import {db, auth} from '../Security/firebase.js';
-import * as FileSystem from 'expo-file-system';
+
 import FastImage from 'react-native-fast-image';
+
 import ImagePicker from 'react-native-image-crop-picker';
+import {RNS3} from 'react-native-aws3';
 
 export default function Reellist({navigation, name, id, t}) {
   const dispatch = useDispatch();
   const [reelusers, setreelusers] = useState([]);
   const [images, setimages] = useState([]);
-  const user = auth.currentUser;
+  const user = useSelector(state => state.user.user);
+
+  const currentUser = auth.currentUser;
 
   useEffect(() => {
-    if (user.email) {
+    if (user?.email) {
       const unsubscribe = db
         .collection('reels')
         .doc(id)
@@ -27,6 +31,7 @@ export default function Reellist({navigation, name, id, t}) {
       return unsubscribe;
     }
   }, [id]);
+
   useEffect(() => {
     const unsubscribe = db
       .collection('reels')
@@ -37,7 +42,6 @@ export default function Reellist({navigation, name, id, t}) {
         setimages(
           val.docs.map(doc => ({
             id: doc.id,
-            localimage: FileSystem.documentDirectory + doc.id + '.jpg',
             imagess: doc.data(),
           })),
         );
@@ -55,32 +59,56 @@ export default function Reellist({navigation, name, id, t}) {
       }),
     );
     // navigating to reelview
-    navigation.navigate('ReelView', {from: 'home'});
+    navigation.navigate('ReelView');
   };
+  console.log(user.profilepic);
 
-  const Clickapic = async () => {
+  const Clickapic = () => {
     ImagePicker.openCamera({
       width: 300,
       height: 400,
-    })
-      .then(image => {
-        dispatch(
-          Addreeldata({
-            reelname: name,
-            reelid: id,
-            imageslength: images.length,
-          }),
-        );
-        navigation.navigate('Reelcamerapost', {
-          image: image.path,
-          imagename: image.path.replace(/^.*[\\\/]/, ''),
+    }).then(image => {
+      const file = {
+        uri: image.path,
+        name: image.path.replace(/^.*[\\\/]/, ''),
+        type: 'image/png',
+      };
+      const options = {
+        keyPrefix: `uploads/${currentUser.uid}/`,
+        bucket: 'shotoclick',
+        region: 'ap-south-1',
+        accessKey: 'AKIAR77UFFI6JWKBCVUU',
+        secretKey: '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',
+        successActionStatus: 201,
+      };
+      dispatch(
+        Addreeldata({
+          reelname: name,
+          reelid: id,
+          imageslength: images.length,
+        }),
+      );
+      navigation.navigate('ReelView');
+      dispatch(setindex(0));
+      try {
+        RNS3.put(file, options).then(response => {
+          if (response.status !== 201) {
+            alert('Some error occurred');
+          } else {
+            db.collection('reels').doc(id).collection('reelimages').add({
+              uploadedby: user.email,
+              imageurl: response.body.postResponse.location,
+              uploaderpropic: user.profilepic,
+              timestamp: new Date(),
+              uploadername: user.username,
+            });
+          }
         });
-      })
-      .catch(err => {
-        // Here you handle if the user cancels or any other errors
-      });
+      } catch (err) {
+        console.log(err);
+      }
+    });
   };
-
   return (
     <TouchableOpacity
       activeOpacity={0.9}
@@ -92,10 +120,14 @@ export default function Reellist({navigation, name, id, t}) {
         </Text>
         <View style={{flexDirection: 'row'}}>
           <Text style={{color: '#d4d4d4', fontSize: 12}}>
-            {t.split(' ')[0]} {t.split(' ')[1]} {t.split(' ')[2]}-
+            {Number(t?.split(' ')[4]?.split(':')[0]) +
+              5 +
+              ':' +
+              Number(t?.split(' ')[4]?.split(':')[1])}
+            - {t?.split(' ')[1]} {t?.split(' ')[2]} {t?.split(' ')[3]}
           </Text>
           <Text style={{color: '#d4d4d4', fontSize: 12}}>
-            {images.length} photos
+            - {images.length} photos
           </Text>
         </View>
       </View>

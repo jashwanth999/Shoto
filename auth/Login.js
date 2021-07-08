@@ -20,7 +20,6 @@ import {
   statusCodes,
 } from '@react-native-google-signin/google-signin';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
 export default function Login({navigation}) {
   const [act, setact] = useState(true); // Activity Indicator
 

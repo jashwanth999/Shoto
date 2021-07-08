@@ -10,6 +10,7 @@ import Adduserslist from '../Components/Addcontributors/Adduserslist.js';
 import Photoview from '../Components/Photoview.js';
 import UserProfile from '../Screens/UserProfile.js';
 import SelectImageScreen from '../Screens/SelectImageScreen.js';
+
 const Stack = createStackNavigator();
 export default function StackNavigator() {
   return (
@@ -18,7 +19,6 @@ export default function StackNavigator() {
         headerShown: false,
       }}>
       <Stack.Screen name="Splashscreen" component={Splashscreen} />
-      <Stack.Screen name="Reelcamerapost" component={Reelcamerapost} />
       <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="Shotohome" component={ShotoHome} />
       <Stack.Screen name="ReelView" component={ReelView} />
@@ -27,6 +27,7 @@ export default function StackNavigator() {
       <Stack.Screen name="Photoview" component={Photoview} />
       <Stack.Screen name="userprofile" component={UserProfile} />
       <Stack.Screen name="selectimagescreen" component={SelectImageScreen} />
+      <Stack.Screen name="Reelcamerapost" component={Reelcamerapost} />
     </Stack.Navigator>
   );
 }

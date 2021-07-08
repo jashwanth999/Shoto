@@ -10,7 +10,7 @@ import {
   BackHandler,
 } from 'react-native';
 import {Header} from 'react-native-elements';
-import { Ionicons } from '../Styles/Icons.js';
+import {Ionicons} from '../Styles/Icons.js';
 import Imagecard from './Imagecard.js';
 import Thumbnail from './Thumbnail.js';
 import {useSelector, useDispatch} from 'react-redux';
@@ -37,7 +37,6 @@ export default function ReelView({navigation}) {
 
   // android back button goes to home screen
 
-
   useFocusEffect(
     React.useCallback(() => {
       const onBackPress = () => {
@@ -53,7 +52,6 @@ export default function ReelView({navigation}) {
   // get index  of image card stored in reducers when thumbnail clicked
 
   const yof = useSelector(state => state.y.y);
-
 
   // get images of reels stored in reducers
 
@@ -129,11 +127,10 @@ export default function ReelView({navigation}) {
         uploaderid={item.reelimages?.uploadedby}
         reelid={reeldata.reelid}
         navigation={navigation}
-        timestamp={3}
         t={new Date(item.reelimages?.timestamp.seconds * 1000).toUTCString()}
         uploadername={item.reelimages?.uploadername}
         useremail={reeldata.useremail}
-        profilepic={item.reelimages?.profilepic}
+        profilepic={item.reelimages?.uploaderpropic}
         trigger={trigger}
       />
     );

@@ -1,22 +1,56 @@
 import React from 'react';
 import {StyleSheet, View, TouchableOpacity, Text} from 'react-native';
-import { MaterialCommunityIcons,MaterialIcons } from '../Styles/Icons';
+import {MaterialCommunityIcons, MaterialIcons} from '../Styles/Icons';
 import ImagePicker from 'react-native-image-crop-picker';
+import {auth, db} from '../Security/firebase';
+import {useDispatch, useSelector} from 'react-redux';
+import {RNS3} from 'react-native-aws3';
+import {clearScrollData, setindex} from '../actions';
 function Footer2({navigation}) {
-  const takePhoto2 = async () => {
+  const currentUser = auth.currentUser;
+  const dispatch = useDispatch();
+  const user = useSelector(state => state.user.user);
+  const reeldata = useSelector(state => state.reeldata.reeldata);
+  const takePhoto2 = () => {
     ImagePicker.openCamera({
       width: 300,
       height: 400,
-    })
-      .then(image => {
-        navigation.navigate('Reelcamerapost', {
-          image: image.path,
-          imagename: image.path.replace(/^.*[\\\/]/, ''),
+    }).then(image => {
+      const file = {
+        uri: image.path,
+        name: image.path.replace(/^.*[\\\/]/, ''),
+        type: 'image/png',
+      };
+      const options = {
+        keyPrefix: `uploads/${currentUser.uid}/`,
+        bucket: 'shotoclick',
+        region: 'ap-south-1',
+        accessKey: 'AKIAR77UFFI6JWKBCVUU',
+        secretKey: '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',
+        successActionStatus: 201,
+      };
+      try {
+        RNS3.put(file, options).then(response => {
+          if (response.status !== 201) {
+            alert('Some error occurred');
+          } else {
+            navigation.navigate('ReelView');
+            dispatch(clearScrollData());
+            dispatch(setindex(0));
+            db.collection('reels')
+              .doc(reeldata.reelid)
+              .collection('reelimages')
+              .add({
+                uploadedby: user.email,
+                imageurl: response.body.postResponse.location,
+                uploaderpropic: user.profilepic,
+                timestamp: new Date(),
+                uploadername: user.username,
+              });
+          }
         });
-      })
-      .catch(err => {
-        // Here you handle if the user cancels or any other errors
-      });
+      } catch (err) {}
+    });
   };
   return (
     <View style={styles.container}>

@@ -13,7 +13,6 @@ LogBox.ignoreLogs(['Warning: ...']);
 LogBox.ignoreAllLogs();
 LogBox.ignoreLogs(['Setting a timer for a long period of time']);
 LogBox.ignoreLogs(['Deprecated: Native Google Sign-In has been moved']);
-LogBox.ignoreLogs(['Unhandled promise rejection']);
 
 export default function App() {
   return (

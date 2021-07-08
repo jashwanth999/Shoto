@@ -14,7 +14,7 @@ import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {auth} from '../Security/firebase';
 import {Overlay} from 'react-native-elements';
-import {Addreel, Addreeldata, Adduser, clearData} from '../actions';
+import {Addreel, Adduser} from '../actions';
 function Hello() {
   return (
     <View style={styles.helloContainer}>
@@ -53,8 +53,6 @@ function UserProfile({navigation}) {
       toggleOverlay();
       dispatch(Addreel(null));
       dispatch(Adduser(null));
-      dispatch(clearData());
-      dispatch(Addreeldata(null));
     });
   };
 

@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React from 'react';
 import {View, StyleSheet, Text} from 'react-native';
 import {Octicons} from '../Styles/Icons';
 import {TouchableOpacity} from 'react-native';
@@ -17,8 +17,6 @@ export default function imagecard({
   url,
   profilepic,
 }) {
-  const [loadEnd, setLoadEnd] = useState(false);
-
   return (
     <View>
       <TouchableOpacity
@@ -36,10 +34,6 @@ export default function imagecard({
         }
         style={styles.imagecard}>
         <FastImage
-          onError={() => {
-            setLoadEnd(true);
-            console.log('true');
-          }}
           style={styles.backgroundImage}
           source={{
             uri: url,
@@ -58,7 +52,11 @@ export default function imagecard({
               <Text style={{color: '#d4d4d4', fontSize: 13}}>
                 {uploadername}
               </Text>
-              <Text style={{color: '#d4d4d4', fontSize: 11}}>{t}</Text>
+              <Text style={{color: '#d4d4d4', fontSize: 11}}>
+                {' '}
+                {t.split(' ')[1]} {t.split(' ')[2]} {t.split(' ')[3]}{' '}
+                {t.split(' ')[4]}
+              </Text>
             </View>
           </View>
 

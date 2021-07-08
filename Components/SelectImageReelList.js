@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 
-import { MaterialIcons } from '../Styles/Icons.js';
+import {MaterialIcons} from '../Styles/Icons.js';
 import {useDispatch} from 'react-redux';
 import {Addreeldata, clearScrollData, setindex} from '../actions.js';
 import {db, auth} from '../Security/firebase.js';
@@ -66,18 +66,6 @@ export default function Reellist({navigation, name, id, t, image, imagename}) {
     return unsubscribe;
   }, [id]);
 
-  const setreel = () => {
-    // set reel details to reducers
-    dispatch(
-      Addreeldata({
-        reelname: name,
-        reelid: id,
-        imageslength: images.length,
-      }),
-    );
-    // navigating to reelview
-    navigation.navigate('ReelView');
-  };
   const upload = () => {
     navigation.navigate('ReelView');
     db.collection('reels')
