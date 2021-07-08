@@ -20,22 +20,68 @@ import {
   setindex,
   updateReelImages,
 } from '../actions.js';
-import {db} from '../Security/firebase.js';
+import {auth, db} from '../Security/firebase.js';
 import * as FileSystem from 'expo-file-system';
 import Footer2 from '../Screens/Footer2.js';
 import {useFocusEffect} from '@react-navigation/native';
+import {RNS3} from 'react-native-aws3';
 
-export default function ReelView({navigation}) {
+export default function ReelView({navigation, route}) {
+  const {image, imagename} = route.params;
   let onEndReacheMomentum = false;
+
   const [flatRef, setFlatRef] = useState();
   const dispatch = useDispatch();
   const [lastPosition, setLastPosition] = useState(false);
   const [startAfter, setstartAfter] = useState(null);
   const [data, setData] = useState([]);
-  const [spinner, setSpinner] = useState(false);
-  const trigger = useSelector(state => state.searchTrigger.searchHeader);
 
-  // android back button goes to home screen
+  // get details of reels stored in reducers
+
+  const reeldata = useSelector(state => state.reeldata.reeldata);
+  const [spinner, setSpinner] = useState(false);
+  const user = useSelector(state => state.user.user);
+
+  const currentUser = auth.currentUser;
+  const file = {
+    uri: image,
+    name: imagename,
+    type: 'image/png',
+  };
+  const options = {
+    keyPrefix: `uploads/${currentUser.uid}/`,
+    bucket: 'shotoclick',
+    region: 'ap-south-1',
+    accessKey: 'AKIAR77UFFI6JWKBCVUU',
+    secretKey: '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',
+    successActionStatus: 201,
+  };
+
+  const uploadImage = () => {
+    try {
+      RNS3.put(file, options).then(response => {
+        if (response.status !== 201) {
+          alert('Some error occurred');
+        } else {
+          db.collection('reels')
+            .doc(reeldata.reelid)
+            .collection('reelimages')
+            .add({
+              uploadedby: user.email,
+              imageurl: response.body.postResponse.location,
+              uploaderpropic: user.profilepic,
+              timestamp: new Date(),
+              uploadername: user.username,
+            });
+        }
+      });
+    } catch (err) {}
+  };
+  useEffect(() => {
+    if (image) {
+      uploadImage();
+    }
+  }, [image]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -56,10 +102,6 @@ export default function ReelView({navigation}) {
   // get images of reels stored in reducers
 
   const reelimages = useSelector(state => state.reellistimages.reellistimages);
-
-  // get details of reels stored in reducers
-
-  const reeldata = useSelector(state => state.reeldata.reeldata);
 
   // get reelimages  from firestore
 
@@ -131,7 +173,7 @@ export default function ReelView({navigation}) {
         uploadername={item.reelimages?.uploadername}
         useremail={reeldata.useremail}
         profilepic={item.reelimages?.uploaderpropic}
-        trigger={trigger}
+        time={item.reelimages?.time}
       />
     );
   }, []);
@@ -141,7 +183,6 @@ export default function ReelView({navigation}) {
         url={item.reelimages?.imageurl}
         index={index}
         localimage={item.localimage}
-        trigger={trigger}
       />
     );
   }, []);
@@ -209,7 +250,7 @@ export default function ReelView({navigation}) {
               navigation.navigate('Shotohome');
               dispatch(clearScrollData());
               dispatch(setindex(0));
-              dispatch(Addreelimages(null));
+                dispatch(Addreelimages(null));
             }}
             style={{display: 'flex', flexDirection: 'row', marginTop: 4}}>
             <Ionicons name="chevron-back" color="#d4d4d4" size={21} />
@@ -243,7 +284,7 @@ export default function ReelView({navigation}) {
               removeClippedSubviews={false}
               onEndReachedThreshold={0.1}
               showsVerticalScrollIndicator={false}
-              data={data}
+              data={reelimages}
               ref={ref => setFlatRef(ref)}
               getItemLayout={getItemLayout}
               renderItem={renderImage}
@@ -270,7 +311,7 @@ export default function ReelView({navigation}) {
               removeClippedSubviews={false}
               onEndReachedThreshold={0.1}
               showsVerticalScrollIndicator={false}
-              data={data}
+              data={reelimages}
               renderItem={renderThumbnail}
               keyExtractor={item => item.id}
               onEndReached={loadMore}

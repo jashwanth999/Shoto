@@ -16,6 +16,7 @@ export default function imagecard({
   t,
   url,
   profilepic,
+  time,
 }) {
   return (
     <View>
@@ -53,9 +54,7 @@ export default function imagecard({
                 {uploadername}
               </Text>
               <Text style={{color: '#d4d4d4', fontSize: 11}}>
-                {' '}
-                {t.split(' ')[1]} {t.split(' ')[2]} {t.split(' ')[3]}{' '}
-                {t.split(' ')[4]}
+                {t === 'Invalid Date' ? time : t}
               </Text>
             </View>
           </View>

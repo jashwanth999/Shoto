@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {View, StyleSheet, Text, TouchableOpacity} from 'react-native';
 import {MaterialIcons} from '../Styles/Icons.js';
 import {useDispatch, useSelector} from 'react-redux';
-import {Addreeldata, setindex} from '../actions.js';
+import {Addreeldata, setindex, updateLocalImages} from '../actions.js';
 import {db, auth} from '../Security/firebase.js';
 
 import FastImage from 'react-native-fast-image';
@@ -15,8 +15,6 @@ export default function Reellist({navigation, name, id, t}) {
   const [reelusers, setreelusers] = useState([]);
   const [images, setimages] = useState([]);
   const user = useSelector(state => state.user.user);
-
-  const currentUser = auth.currentUser;
 
   useEffect(() => {
     if (user?.email) {
@@ -48,6 +46,15 @@ export default function Reellist({navigation, name, id, t}) {
       });
     return unsubscribe;
   }, [id]);
+  var today = new Date();
+  today =
+    parseInt(today.getMonth() + 1) +
+    ' ' +
+    today.getDate() +
+    ' ' +
+    today.getHours() +
+    ':' +
+    today.getMinutes();
 
   const setreel = () => {
     // set reel details to reducers
@@ -59,28 +66,17 @@ export default function Reellist({navigation, name, id, t}) {
       }),
     );
     // navigating to reelview
-    navigation.navigate('ReelView');
+    navigation.navigate('ReelView', {
+      image: '',
+      imagename: '',
+    });
   };
-  console.log(user.profilepic);
 
   const Clickapic = () => {
     ImagePicker.openCamera({
       width: 300,
       height: 400,
     }).then(image => {
-      const file = {
-        uri: image.path,
-        name: image.path.replace(/^.*[\\\/]/, ''),
-        type: 'image/png',
-      };
-      const options = {
-        keyPrefix: `uploads/${currentUser.uid}/`,
-        bucket: 'shotoclick',
-        region: 'ap-south-1',
-        accessKey: 'AKIAR77UFFI6JWKBCVUU',
-        secretKey: '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',
-        successActionStatus: 201,
-      };
       dispatch(
         Addreeldata({
           reelname: name,
@@ -88,25 +84,25 @@ export default function Reellist({navigation, name, id, t}) {
           imageslength: images.length,
         }),
       );
-      navigation.navigate('ReelView');
+     
+      navigation.navigate('ReelView', {
+        image: image.path,
+        imagename: image.path.replace(/^.*[\\\/]/, ''),
+      });
+      dispatch(
+        updateLocalImages({
+          id: '',
+          reelimages: {
+            uploadedby: user.email,
+            imageurl: image.path,
+            uploaderpropic: user.profilepic,
+            timestamp: '',
+            uploadername: user.username,
+            time: today,
+          },
+        }),
+      );
       dispatch(setindex(0));
-      try {
-        RNS3.put(file, options).then(response => {
-          if (response.status !== 201) {
-            alert('Some error occurred');
-          } else {
-            db.collection('reels').doc(id).collection('reelimages').add({
-              uploadedby: user.email,
-              imageurl: response.body.postResponse.location,
-              uploaderpropic: user.profilepic,
-              timestamp: new Date(),
-              uploadername: user.username,
-            });
-          }
-        });
-      } catch (err) {
-        console.log(err);
-      }
     });
   };
   return (
