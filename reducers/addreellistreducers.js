@@ -1,5 +1,6 @@
 const initailState = {
   reellist: [],
+  
 };
 export const Addreellistreducer = (state = initailState, action) => {
   switch (action.type) {

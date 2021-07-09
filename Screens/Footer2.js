@@ -4,7 +4,7 @@ import {MaterialCommunityIcons, MaterialIcons} from '../Styles/Icons';
 import ImagePicker from 'react-native-image-crop-picker';
 import {useDispatch, useSelector} from 'react-redux';
 import {clearScrollData, setindex, updateLocalImages} from '../actions';
-import { db } from '../Security/firebase';
+import {db} from '../Security/firebase';
 function Footer2({navigation}) {
   var today = new Date();
   today =
@@ -26,17 +26,23 @@ function Footer2({navigation}) {
     }).then(image => {
       dispatch(clearScrollData());
       dispatch(setindex(0));
-      db.collection('reels').doc(reeldata.reelid).collection('reelimages').add({
-        uploadedby: user.email,
-        imageurl: image.path,
-        uploaderpropic: user.profilepic,
-        timestamp: new Date(),
-        uploadername: user.username,
-      });
-      navigation.navigate('ReelView', {
-        image: image.path,
-        imagename: image.path.replace(/^.*[\\\/]/, ''),
-      });
+      db.collection('reels')
+        .doc(reeldata.reelid)
+        .collection('reelimages')
+        .add({
+          uploadedby: user.email,
+          imageurl: image.path,
+          uploaderpropic: user.profilepic,
+          timestamp: new Date(),
+          uploadername: user.username,
+        })
+        .then(res => {
+          navigation.navigate('ReelView', {
+            image: image.path,
+            imagename: image.path.replace(/^.*[\\\/]/, ''),
+            reelid: res.id,
+          });
+        });
     });
   };
   return (

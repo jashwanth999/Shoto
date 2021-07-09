@@ -1,6 +1,5 @@
 const initailState = {
   reellistimages: [],
-  localimages: [],
 };
 export const Addreelimagereducer = (state = initailState, action) => {
   switch (action.type) {
@@ -9,8 +8,7 @@ export const Addreelimagereducer = (state = initailState, action) => {
     case 'UPDATE_LOCAL_IMAGES':
       return {
         ...state,
-        localimages: [...state.localimages, action.payload],
-        reellistimages: [...state.localimages, ...state.reellistimages],
+        reellistimages: [action.payload, ...state.reellistimages],
       };
     default:
       return state;

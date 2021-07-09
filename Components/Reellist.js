@@ -2,7 +2,12 @@ import React, {useEffect, useState} from 'react';
 import {View, StyleSheet, Text, TouchableOpacity} from 'react-native';
 import {MaterialIcons} from '../Styles/Icons.js';
 import {useDispatch, useSelector} from 'react-redux';
-import {Addreeldata, setindex, updateLocalImages} from '../actions.js';
+import {
+  Addreeldata,
+  clearScrollData,
+  setindex,
+  updateLocalImages,
+} from '../actions.js';
 import {db, auth} from '../Security/firebase.js';
 
 import FastImage from 'react-native-fast-image';
@@ -84,25 +89,25 @@ export default function Reellist({navigation, name, id, t}) {
           imageslength: images.length,
         }),
       );
-     
-      navigation.navigate('ReelView', {
-        image: image.path,
-        imagename: image.path.replace(/^.*[\\\/]/, ''),
-      });
-      dispatch(
-        updateLocalImages({
-          id: '',
-          reelimages: {
-            uploadedby: user.email,
-            imageurl: image.path,
-            uploaderpropic: user.profilepic,
-            timestamp: '',
-            uploadername: user.username,
-            time: today,
-          },
-        }),
-      );
+      dispatch(clearScrollData());
       dispatch(setindex(0));
+      db.collection('reels')
+        .doc(id)
+        .collection('reelimages')
+        .add({
+          uploadedby: user.email,
+          imageurl: image.path,
+          uploaderpropic: user.profilepic,
+          timestamp: new Date(),
+          uploadername: user.username,
+        })
+        .then(res => {
+          navigation.navigate('ReelView', {
+            image: image.path,
+            imagename: image.path.replace(/^.*[\\\/]/, ''),
+            reelid: res.id,
+          });
+        });
     });
   };
   return (

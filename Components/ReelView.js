@@ -25,9 +25,8 @@ import * as FileSystem from 'expo-file-system';
 import Footer2 from '../Screens/Footer2.js';
 import {useFocusEffect} from '@react-navigation/native';
 import {RNS3} from 'react-native-aws3';
-
 export default function ReelView({navigation, route}) {
-  const {image, imagename} = route.params;
+  const {image, imagename, reelid} = route.params;
   let onEndReacheMomentum = false;
 
   const [flatRef, setFlatRef] = useState();
@@ -66,12 +65,9 @@ export default function ReelView({navigation, route}) {
           db.collection('reels')
             .doc(reeldata.reelid)
             .collection('reelimages')
-            .add({
-              uploadedby: user.email,
+            .doc(reelid)
+            .update({
               imageurl: response.body.postResponse.location,
-              uploaderpropic: user.profilepic,
-              timestamp: new Date(),
-              uploadername: user.username,
             });
         }
       });
@@ -122,7 +118,6 @@ export default function ReelView({navigation, route}) {
         } else {
           setstartAfter(null);
         }
-
         dispatch(
           Addreelimages(
             snapshot.docs.map(doc => ({
@@ -131,13 +126,6 @@ export default function ReelView({navigation, route}) {
               localimage: FileSystem.documentDirectory + doc.id + '.jpg',
             })),
           ),
-        );
-        setData(
-          snapshot.docs.map(doc => ({
-            id: doc.id,
-            reelimages: doc.data(),
-            localimage: FileSystem.documentDirectory + doc.id + '.jpg',
-          })),
         );
       });
 
@@ -174,6 +162,7 @@ export default function ReelView({navigation, route}) {
         useremail={reeldata.useremail}
         profilepic={item.reelimages?.uploaderpropic}
         time={item.reelimages?.time}
+        image={image}
       />
     );
   }, []);
@@ -210,7 +199,6 @@ export default function ReelView({navigation, route}) {
               setstartAfter(lastdata);
             } else setstartAfter(null);
             setSpinner(false);
-
             dispatch(
               Addreelimages([
                 ...reelimages,
@@ -221,7 +209,6 @@ export default function ReelView({navigation, route}) {
                 })),
               ]),
             );
-
             setData([
               ...data,
               ...snapshot.docs.map(doc => ({
@@ -250,7 +237,7 @@ export default function ReelView({navigation, route}) {
               navigation.navigate('Shotohome');
               dispatch(clearScrollData());
               dispatch(setindex(0));
-                dispatch(Addreelimages(null));
+              dispatch(Addreelimages(null));
             }}
             style={{display: 'flex', flexDirection: 'row', marginTop: 4}}>
             <Ionicons name="chevron-back" color="#d4d4d4" size={21} />

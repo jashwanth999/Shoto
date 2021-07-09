@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, StyleSheet, Text} from 'react-native';
+import {View, StyleSheet, Text, Image} from 'react-native';
 import {Octicons} from '../Styles/Icons';
 import {TouchableOpacity} from 'react-native';
 import {Avatar} from 'react-native-elements/dist/avatar/Avatar';
@@ -38,7 +38,6 @@ export default function imagecard({
           style={styles.backgroundImage}
           source={{
             uri: url,
-            priority: FastImage.priority.low,
           }}
         />
         <View style={styles.imagecardfooter}>
