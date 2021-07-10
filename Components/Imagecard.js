@@ -5,7 +5,7 @@ import { TouchableOpacity } from 'react-native';
 import { Avatar } from 'react-native-elements/dist/avatar/Avatar';
 import FastImage from 'react-native-fast-image';
 import { createImageProgress } from 'react-native-image-progress';
-import ProgressBar from 'react-native-progress/Bar';
+//import ProgressBar from 'react-native-progress/Bar';
 export default function imagecard({
   navigation,
   uploadername,
@@ -42,7 +42,7 @@ export default function imagecard({
         onPress={goToImageView}
       >
         <Image
-          indicator={ProgressBar} 
+          // indicator={ProgressBar} 
           indicatorProps={{
             size: 40,
             borderWidth: 0,
