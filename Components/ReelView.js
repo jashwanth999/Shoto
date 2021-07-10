@@ -200,7 +200,7 @@ export default function ReelView({navigation, route}) {
                 ...snapshot.docs.map(doc => ({
                   id: doc.id,
                   reelimages: doc.data(),
-                  localimage: FileSystem.documentDirectory + doc.id + '.jpg',
+                  // localimage: FileSystem.documentDirectory + doc.id + '.jpg',
                 })),
               ]),
             );
@@ -209,7 +209,7 @@ export default function ReelView({navigation, route}) {
               ...snapshot.docs.map(doc => ({
                 id: doc.id,
                 reelimages: doc.data(),
-                localimage: FileSystem.documentDirectory + doc.id + '.jpg',
+                // localimage: FileSystem.documentDirectory + doc.id + '.jpg',
               })),
             ]);
           }

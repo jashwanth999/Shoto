@@ -1,11 +1,11 @@
-import React, {useState} from 'react';
-import {View, StyleSheet, Text} from 'react-native';
-import {Octicons} from '../Styles/Icons';
-import {TouchableOpacity} from 'react-native';
-import {Avatar} from 'react-native-elements/dist/avatar/Avatar';
+import React, { useState } from 'react';
+import { View, StyleSheet, Text } from 'react-native';
+import { Octicons } from '../Styles/Icons';
+import { TouchableOpacity } from 'react-native';
+import { Avatar } from 'react-native-elements/dist/avatar/Avatar';
 import FastImage from 'react-native-fast-image';
-import {createImageProgress} from 'react-native-image-progress';
-
+import { createImageProgress } from 'react-native-image-progress';
+import ProgressBar from 'react-native-progress/Bar';
 export default function imagecard({
   navigation,
   uploadername,
@@ -18,112 +18,154 @@ export default function imagecard({
   url,
   profilepic,
   time,
+  containerStyle
 }) {
+
   const Image = createImageProgress(FastImage);
 
+  const goToImageView = () => {
+    navigation.navigate('ImageView', {
+      reelid: reelid,
+      imageurl: url,
+      uploadername: uploadername,
+      uploaderid: uploaderid,
+      imageid: imageid,
+      useremail: useremail,
+      t: t,
+    })
+  };
+
   return (
-    <View>
+    <View style={[styles.container, containerStyle]}>
       <TouchableOpacity
-        activeOpacity={0.9}
-        onPress={() =>
-          navigation.navigate('ImageView', {
-            reelid: reelid,
-            imageurl: url,
-            uploadername: uploadername,
-            uploaderid: uploaderid,
-            imageid: imageid,
-            useremail: useremail,
-            t: t,
-          })
-        }
-        style={styles.imagecard}>
+        activeOpacity={0.8}
+        onPress={goToImageView}
+      >
         <Image
+          indicator={ProgressBar} 
           indicatorProps={{
             size: 40,
             borderWidth: 0,
-            color: 'white',
-            unfilledColor: 'rgba(200, 200, 200, 0.2)',
+            color: "rgba(36, 123, 160, 1)",
+            unfilledColor: 'rgba(36, 123, 160, 0.2)',
           }}
-          style={{
-            borderBottomLeftRadius: 0,
-            borderBottomRightRadius: 0,
-            height: 260,
-            width: '100%',
-            resizeMode: 'cover',
-            borderRadius: 4,
-            overflow: 'hidden',
-          }}
+          resizeMode="cover"
+          style={styles.image}
           source={{
             uri: url,
           }}
         />
-        <View style={styles.imagecardfooter}>
-          <View style={{flexDirection: 'row'}}>
-            <Avatar
-              rounded
-              source={{
-                uri: profilepic,
-              }}
-            />
-            <View style={styles.left}>
-              <Text style={{color: '#d4d4d4', fontSize: 13}}>
-                {uploadername}
-              </Text>
-              <Text style={{color: '#d4d4d4', fontSize: 11}}>
-                {t === 'Invalid Date' ? time : t}
-              </Text>
-            </View>
-          </View>
 
-          <View style={styles.right}>
-            <Octicons
-              name="comment-discussion"
-              color="#d4d4d4"
-              size={20}
-              onPress={() => {}}
-            />
-            <Text style={{color: '#d4d4d4', marginBottom: 5, marginLeft: 4}}>
-              {comments}
-            </Text>
-          </View>
-        </View>
       </TouchableOpacity>
+
+      <View style={styles.cardInfo}>
+
+        <CreatorBadge
+          profilePic={profilepic}
+          uploaderName={uploadername}
+          dateTime={t}
+          time={time}
+        />
+        <CommentBadge comments={comments} />
+
+      </View>
+
     </View>
   );
 }
+
+const CardImage = () => {
+
+}
+
+const CommentBadge = ({ comments }) => {
+  return (
+    <View style={styles.commentBadge}>
+      <Octicons
+        name="comment-discussion"
+        color="#d4d4d4"
+        size={20}
+        onPress={() => { }}
+      />
+      <Text style={styles.commentsCount}>
+        {comments}
+      </Text>
+    </View>
+  )
+}
+
+const CreatorBadge = ({ profilePic, uploaderName, dateTime, time }) => {
+  return (
+    <View style={styles.creatorBadge}>
+      <Avatar
+        rounded
+        source={{
+          uri: profilePic
+            ? profilePic
+            : 'https://res.cloudinary.com/jashwanth/image/upload/v1624182501/60111_nihqdw.jpg',
+        }}
+      />
+      <View style={styles.userText}>
+        <Text style={styles.creatorName}> {uploaderName} </Text>
+        <Text style={styles.createdAt}> {dateTime === 'Invalid Date' ? time : dateTime} </Text>
+      </View>
+    </View>
+  )
+}
+
 const styles = StyleSheet.create({
-  imagecard: {
-    width: '94%',
-    height: 320,
-    marginTop: 10,
-    marginLeft: 8,
-    display: 'flex',
-    flexDirection: 'column',
+  container: {
+    backgroundColor: "rgba(18,18,18,1)",
+    borderRadius: 5,
+    overflow: 'hidden',
+    margin: 10,
   },
-  backgroundImage: {
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
-    height: 260,
+  image: {
     width: '100%',
-    resizeMode: 'cover',
-    borderRadius: 4,
+    height: 'auto',
+    aspectRatio: 3 / 2,
+    flexDirection: 'column',
     overflow: 'hidden',
   },
-  imagecardfooter: {
-    marginTop: 10,
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+  cardInfo: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    flexWrap: "nowrap",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
   },
-  left: {
-    display: 'flex',
-    flexDirection: 'column',
-    marginLeft: 15,
+  creatorBadge: {
+    width: "70%",
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 5,
   },
-  right: {
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+  commentsCount: {
+    color: "rgba(212,212,212,1)",
+    marginLeft: 5
+  },
+  userText: {
+    width: 853,
+    alignItems: "flex-start",
+    justifyContent: "center",
+    alignSelf: "stretch",
+    margin: 5
+  },
+  creatorName: {
+    color: "rgba(212,212,212,1)",
+    textAlign: "left",
+    fontSize: 12,
+    fontWeight: "bold",
+    marginVertical: 2,
+  },
+  createdAt: {
+    color: "rgba(212,212,212,1)",
+    fontSize: 10,
+    // marginVertical: 2,
+  },
+  commentBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
   },
 });
