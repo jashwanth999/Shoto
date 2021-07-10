@@ -17,14 +17,12 @@ export default function imagecard({
   t,
   url,
   profilepic,
-  containerStyle,
   time,
 }) {
   const Image = createImageProgress(FastImage);
 
   return (
-    <View style={[styles.container, containerStyle]}>
-
+    <View>
       <TouchableOpacity
         activeOpacity={0.9}
         onPress={() =>
@@ -37,119 +35,95 @@ export default function imagecard({
             useremail: useremail,
             t: t,
           })
-        }>
-          
-        <FastImage
-          onLoadEnd={() => {
-            setLoadEnd(false);
+        }
+        style={styles.imagecard}>
+        <Image
+          indicatorProps={{
+            size: 40,
+            borderWidth: 0,
+            color: 'white',
+            unfilledColor: 'rgba(200, 200, 200, 0.2)',
           }}
-          resizeMode="cover"
-          style={styles.image}
+          style={{
+            borderBottomLeftRadius: 0,
+            borderBottomRightRadius: 0,
+            height: 260,
+            width: '100%',
+            resizeMode: 'cover',
+            borderRadius: 4,
+            overflow: 'hidden',
+          }}
           source={{
             uri: url,
           }}
         />
+        <View style={styles.imagecardfooter}>
+          <View style={{flexDirection: 'row'}}>
+            <Avatar
+              rounded
+              source={{
+                uri: profilepic,
+              }}
+            />
+            <View style={styles.left}>
+              <Text style={{color: '#d4d4d4', fontSize: 13}}>
+                {uploadername}
+              </Text>
+              <Text style={{color: '#d4d4d4', fontSize: 11}}>
+                {t === 'Invalid Date' ? time : t}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.right}>
+            <Octicons
+              name="comment-discussion"
+              color="#d4d4d4"
+              size={20}
+              onPress={() => {}}
+            />
+            <Text style={{color: '#d4d4d4', marginBottom: 5, marginLeft: 4}}>
+              {comments}
+            </Text>
+          </View>
+        </View>
       </TouchableOpacity>
-
-      <View style={styles.cardInfo}>
-
-        <CreatorBadge 
-          profilePic = {profilepic}
-          uploaderName = {uploadername}
-          dateTime = {t}
-        />
-        <CommentBadge comments = {comments}/>
-
-      </View>
     </View>
   );
 }
-
-const CommentBadge = ({comments}) => {
-  return (
-    <View style={styles.commentBadge}>
-      <Octicons
-        name="comment-discussion"
-        color="#d4d4d4"
-        size={20}
-        onPress={() => { }}
-      />
-      <Text style={styles.commentsCount}>
-        {comments}
-      </Text>
-    </View>
-  )
-}
-
-const CreatorBadge = ({profilePic, uploaderName, dateTime}) => {
-  return (
-    <View style={styles.creatorBadge}>
-      <Avatar
-        rounded
-        source={{
-          uri: profilePic
-            ? profilePic
-            : 'https://res.cloudinary.com/jashwanth/image/upload/v1624182501/60111_nihqdw.jpg',
-        }}
-      />
-      <View style={styles.userText}>
-        <Text style={styles.creatorName}> {uploaderName} </Text>
-        <Text style={styles.createdAt}> {dateTime} </Text>
-      </View>
-    </View>
-  )
-}
-
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: "rgba(18,18,18,1)",
-    borderRadius: 5,
+  imagecard: {
+    width: '94%',
+    height: 320,
+    marginTop: 10,
+    marginLeft: 8,
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  backgroundImage: {
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    height: 260,
+    width: '100%',
+    resizeMode: 'cover',
+    borderRadius: 4,
     overflow: 'hidden',
-    margin: 10,
   },
-  image: {
-    minWidth: 310,
-    width: "100%",
-    height: undefined,
-    aspectRatio: 1
+  imagecardfooter: {
+    marginTop: 10,
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
   },
-  cardInfo: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    flexWrap: "nowrap",
-    paddingHorizontal: 15,
+  left: {
+    display: 'flex',
+    flexDirection: 'column',
+    marginLeft: 15,
   },
-  creatorBadge: {
-    width: 181,
-    height: 43,
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 5,
-  },
-  commentsCount: {
-    color: "rgba(212,212,212,1)",
-    marginLeft: 5
-  },
-  userText: {
-    width: 853,
-    alignItems: "flex-start",
-    justifyContent: "center",
-    alignSelf: "stretch",
-    margin: 5
-  },
-  creatorName: {
-    color: "rgba(212,212,212,1)",
-    textAlign: "left",
-    fontSize: 12
-  },
-  createdAt: {
-    color: "rgba(212,212,212,1)",
-    fontSize: 10
-  },
-  commentBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    marginRight: 10
+  right: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
