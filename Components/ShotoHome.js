@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   StyleSheet,
@@ -14,45 +14,53 @@ import {
 import {Header, Avatar} from 'react-native-elements';
 import Reellist from './Reellist.js';
 import {useDispatch, useSelector} from 'react-redux';
-import {db, auth} from '../Security/firebase.js';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import {Addreel, Addreelupdate, Adduser, reelNameAction} from '../actions.js';
+import {Ionicons, MaterialIcons} from '../Styles/Icons.js';
+import {Addreel, Adduser, reelNameAction} from '../actions.js';
 import {useFocusEffect} from '@react-navigation/native';
 import Footer from '../Screens/Footer.js';
-import {GoogleSignin} from '@react-native-google-signin/google-signin';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import firestore from '@react-native-firebase/firestore';
 const wait = timeout => {
   return new Promise(resolve => setTimeout(resolve, timeout));
 };
 
 export default function ShotoHome({navigation}) {
   const dispatch = useDispatch();
-
-  GoogleSignin.configure({
-    scopes: [], // what API you want to access on behalf of the user, default is email and profile
-    webClientId:
-      '821295087358-f7nsmu3rup0ghfflnvk7ret61mv49gec.apps.googleusercontent.com', // client ID of type WEB for your server (needed to verify user ID and offline access)
-    offlineAccess: true, // if you want to access Google API on behalf of the user FROM YOUR SERVER
-  });
+  const db = firestore();
 
   const [isLoading, setisLoading] = useState(false);
 
   const [isSearch, setIsSearch] = useState(false);
 
-  const [refreshing, setRefreshing] = React.useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
   const user = useSelector(state => state.user.user);
+
   const reels = useSelector(state => state.reels.reellist);
-  const changed = useSelector(state => state.changed.changed);
+
+  
+
   const [startAfter, setStartAfter] = useState(null);
+
   const [LastPosition, setLastPosition] = useState(false);
 
-  const [spinner, setSpinner] = useState(false);
-
   const [data, setData] = useState([]);
-  const [search, setSearch] = useState('');
 
+  const [search, setSearch] = useState('');
   // Scroll Down to refresh
+  useEffect(() => {
+    const unsubscribe = db
+      .collection('user_reels')
+      .doc(user?.email)
+      .collection('reellist')
+      .onSnapshot(snapshot => {
+        dispatch(
+          reelNameAction(
+            snapshot.docs.map(doc => doc.data()?.reelname.toLowerCase()),
+          ),
+        );
+      });
+    return unsubscribe;
+  }, [user?.email]);
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
@@ -66,75 +74,15 @@ export default function ShotoHome({navigation}) {
     const unsubscribe = db
       .collection('users')
       .doc(user?.email)
-      .onSnapshot(doc => dispatch(Adduser(doc.data())));
+      .onSnapshot({includeMetadataChanges: true}, doc => {
+        dispatch(Adduser(doc.data()));
+      });
     return unsubscribe;
   }, [user?.email]);
 
-  // get Reellist of user and dispatch it
+  //load more reels on scroll end
 
-  useEffect(() => {
-    let mounted = true;
-    if (mounted && user) {
-      fetchReelList().then(snapshot => {
-        const lastdata = snapshot.docs[snapshot.docs.length - 1];
-        snapshot.docs.length < 5
-          ? setLastPosition(true)
-          : setLastPosition(false);
-        setStartAfter(lastdata);
-        setisLoading(true);
-        dispatch(
-          reelNameAction(
-            snapshot.docs.map(doc => doc.data()?.reelname.toLowerCase()),
-          ),
-        );
-        dispatch(
-          Addreel(
-            snapshot.docs.map(doc => ({
-              id: doc.id,
-              reellist: doc.data(),
-            })),
-          ),
-        );
-
-        setData(
-          snapshot.docs.map(doc => ({
-            id: doc.id,
-            reellist: doc.data(),
-          })),
-        );
-      });
-    }
-    return () => {
-      mounted = false;
-    };
-  }, [refreshing, changed, user?.email]);
-
-  const fetchReelList = async () => {
-    try {
-      return await db
-        .collection('user_reels')
-        .doc(user.email)
-        .collection('reellist')
-        .orderBy('timestamp', 'desc')
-        .limit(5)
-        .get();
-    } catch (error) {}
-  };
-  const fetchReelListMore = async () => {
-    try {
-      return await db
-        .collection('user_reels')
-        .doc(user.email)
-        .collection('reellist')
-        .orderBy('timestamp', 'desc')
-        .startAfter(startAfter)
-        .limit(5)
-        .get();
-    } catch (error) {}
-  };
-
-  // navigation go back lock fc:44:d6:16:b4:d0:f6:c7:0a:a4:fe:8d:15:7a:eb:1a:36:cd:d4:97
-
+  // navigation go back lock
 
   useFocusEffect(
     React.useCallback(() => {
@@ -147,6 +95,83 @@ export default function ShotoHome({navigation}) {
     }, []),
   );
 
+  // get Reellist of user and dispatch it
+
+  // get first five reels
+
+  useEffect(() => {
+    if (user?.email) {
+      const unsubscribe = db
+        .collection('user_reels')
+        .doc(user.email)
+        .collection('reellist')
+        .orderBy('timestamp', 'desc')
+        .limit(5)
+        .onSnapshot({includeMetadataChanges: true}, snapshot => {
+          const lastdata = snapshot.docs[snapshot.docs.length - 1];
+          snapshot.docs.length < 5
+            ? setLastPosition(true)
+            : setLastPosition(false);
+          setStartAfter(lastdata);
+          setisLoading(true);
+          dispatch(
+            Addreel(
+              snapshot.docs.map(doc => ({
+                id: doc.id,
+                reellist: doc.data(),
+              })),
+            ),
+          );
+          setData(
+            snapshot.docs.map(doc => ({
+              id: doc.id,
+              reellist: doc.data(),
+            })),
+          );
+        });
+      return unsubscribe;
+    }
+  }, [user?.email]);
+
+  const loadMoreReels = () => {
+    if (user?.email && startAfter) {
+      const unsubscribe = db
+        .collection('user_reels')
+        .doc(user.email)
+        .collection('reellist')
+        .orderBy('timestamp', 'desc')
+        .startAfter(startAfter)
+        .limit(5)
+        .onSnapshot({includeMetadataChanges: true}, snapshot => {
+          if (snapshot && !LastPosition) {
+            snapshot.docs.length < 5
+              ? setLastPosition(true)
+              : setLastPosition(false);
+            const lastdata = snapshot.docs[snapshot.docs.length - 1];
+            setStartAfter(lastdata);
+
+            dispatch(
+              Addreel([
+                ...reels,
+                ...snapshot.docs.map(doc => ({
+                  id: doc.id,
+                  reellist: doc.data(),
+                })),
+              ]),
+            );
+            setData([
+              ...data,
+              ...snapshot.docs.map(doc => ({
+                id: doc.id,
+                reellist: doc.data(),
+              })),
+            ]);
+          }
+        });
+      return unsubscribe;
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS == 'ios' ? 'padding' : 'height'}
@@ -155,6 +180,7 @@ export default function ShotoHome({navigation}) {
       enabled
       style={styles.container}>
       {!isSearch ? (
+        //  main Header
         <Header
           containerStyle={{
             backgroundColor: '#1d2533',
@@ -188,6 +214,7 @@ export default function ShotoHome({navigation}) {
           }
         />
       ) : (
+        // search header
         <Header
           containerStyle={{
             backgroundColor: '#1d2533',
@@ -218,12 +245,13 @@ export default function ShotoHome({navigation}) {
           }
         />
       )}
+
       <StatusBar backgroundColor="#1d2533" />
-      {isLoading && reels ? (
+      {reels ? (
         <View style={{flex: 1}}>
           <FlatList
             showsVerticalScrollIndicator={false}
-            data={data}
+            data={reels}
             initialNumToRender={5}
             renderItem={({item}) =>
               item.reellist?.reelname
@@ -234,7 +262,7 @@ export default function ShotoHome({navigation}) {
                   name={item.reellist?.reelname}
                   navigation={navigation}
                   t={new Date(
-                    item.reellist?.timestamp.seconds * 1000,
+                    item.reellist?.timestamp?.seconds * 1000,
                   ).toUTCString()}
                 />
               ) : (
@@ -242,44 +270,7 @@ export default function ShotoHome({navigation}) {
               )
             }
             keyExtractor={item => item.id}
-            onRefresh={onRefresh}
-            refreshing={refreshing}
-            onEndReached={() => {
-              setSpinner(true);
-              fetchReelListMore().then(snapshot => {
-                if (snapshot && !LastPosition) {
-                  snapshot.docs.length < 5
-                    ? setLastPosition(true)
-                    : setLastPosition(false);
-                  const lastdata = snapshot.docs[snapshot.docs.length - 1];
-                  setStartAfter(lastdata);
-                  setisLoading(true);
-                  setSpinner(false);
-                  dispatch(
-                    reelNameAction(
-                      snapshot.docs.map(doc =>
-                        doc.data()?.reelname.toLowerCase(),
-                      ),
-                    ),
-                  );
-                  dispatch(
-                    Addreelupdate(
-                      snapshot.docs.map(doc => ({
-                        id: doc.id,
-                        reellist: doc.data(),
-                      })),
-                    ),
-                  );
-                  setData([
-                    ...data,
-                    ...snapshot.docs.map(doc => ({
-                      id: doc.id,
-                      reellist: doc.data(),
-                    })),
-                  ]);
-                }
-              });
-            }}
+            onEndReached={loadMoreReels}
             onEndReachedThreshold={5}
             ListFooterComponent={
               !LastPosition && <ActivityIndicator color="grey" size="small" />
@@ -288,14 +279,19 @@ export default function ShotoHome({navigation}) {
           />
         </View>
       ) : (
-        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-          <ActivityIndicator size="large" color="grey" />
-        </View>
+        <Loading />
       )}
       <Footer navigation={navigation} />
     </KeyboardAvoidingView>
   );
 }
+const Loading = () => {
+  return (
+    <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+      <ActivityIndicator size="large" color="grey" />
+    </View>
+  );
+};
 const styles = StyleSheet.create({
   container: {
     height: '100%',

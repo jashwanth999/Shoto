@@ -1,7 +1,6 @@
-import firebase from '@firebase/app';
-import '@firebase/firestore';
-import '@firebase/auth';
-import '@firebase/app';
+/*import firebase from 'firebase';
+import 'firebase/firestore';
+import 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyBJFyW2KfP5Uo0E3gyYzFJ5W2LDGJnciXo',
@@ -16,12 +15,15 @@ const firebaseConfig = {
 if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
+
 const db = firebase.firestore();
 const auth = firebase.auth();
+
 firebase.firestore().settings({
   experimentalForceLongPolling: true,
   merge: true,
   cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
+  timestampsInSnapshots: true,
 });
 
-export {db, auth};
+export {db, auth}*/

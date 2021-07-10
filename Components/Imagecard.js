@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import {View, StyleSheet, Text} from 'react-native';
-import Octicons from 'react-native-vector-icons/Octicons';
+import {Octicons} from '../Styles/Icons';
 import {TouchableOpacity} from 'react-native';
 import {Avatar} from 'react-native-elements/dist/avatar/Avatar';
 import FastImage from 'react-native-fast-image';
@@ -17,9 +17,10 @@ export default function imagecard({
   t,
   url,
   profilepic,
+  time,
 }) {
-  const [loadEnd, setLoadEnd] = useState(true);
   const Image = createImageProgress(FastImage);
+
   return (
     <View>
       <TouchableOpacity
@@ -36,33 +37,41 @@ export default function imagecard({
           })
         }
         style={styles.imagecard}>
-        <FastImage
-          onLoadEnd={() => {
-            setLoadEnd(false);
+        <Image
+          indicatorProps={{
+            size: 40,
+            borderWidth: 0,
+            color: 'white',
+            unfilledColor: 'rgba(200, 200, 200, 0.2)',
           }}
-         
-          style={[styles.backgroundImage]}
+          style={{
+            borderBottomLeftRadius: 0,
+            borderBottomRightRadius: 0,
+            height: 260,
+            width: '100%',
+            resizeMode: 'cover',
+            borderRadius: 4,
+            overflow: 'hidden',
+          }}
           source={{
             uri: url,
-            priority: FastImage.priority.low,
           }}
         />
-
         <View style={styles.imagecardfooter}>
           <View style={{flexDirection: 'row'}}>
             <Avatar
               rounded
               source={{
-                uri: profilepic
-                  ? profilepic
-                  : 'https://res.cloudinary.com/jashwanth/image/upload/v1624182501/60111_nihqdw.jpg',
+                uri: profilepic,
               }}
             />
             <View style={styles.left}>
               <Text style={{color: '#d4d4d4', fontSize: 13}}>
                 {uploadername}
               </Text>
-              <Text style={{color: '#d4d4d4', fontSize: 11}}>{t}</Text>
+              <Text style={{color: '#d4d4d4', fontSize: 11}}>
+                {t === 'Invalid Date' ? time : t}
+              </Text>
             </View>
           </View>
 

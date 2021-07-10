@@ -1,7 +1,7 @@
-const initailState = {
+const initialState = {
   emails: [],
 };
-export const getreeluseremailreducer= (state = initailState, action) => {
+export const getreeluseremailreducer= (state = initialState, action) => {
   switch (action.type) {
     case "GET_REEL_USERS_EMAIL":
       return { emails: action.payload };

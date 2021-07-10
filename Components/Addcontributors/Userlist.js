@@ -1,9 +1,11 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import  Ionicons  from "react-native-vector-icons/Ionicons";
+import { Ionicons } from "../../Styles/Icons";
 import { useSelector } from "react-redux";
-import { db } from "../../Security/firebase";
+
+import firestore from '@react-native-firebase/firestore'
 export default function Userlist({ useremail, admin }) {
+  const db=firestore
   const reeldata = useSelector((state) => state.reeldata.reeldata);
   const user = useSelector((state) => state.user.user);
   const deleteUser = () => {
