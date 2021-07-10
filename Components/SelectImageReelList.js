@@ -11,27 +11,13 @@ import {
 import {MaterialIcons} from '../Styles/Icons.js';
 import {useDispatch} from 'react-redux';
 import {Addreeldata, clearScrollData, setindex} from '../actions.js';
-import {db, auth} from '../Security/firebase.js';
-import * as FileSystem from 'expo-file-system';
-import {RNS3} from 'react-native-aws3';
 import {useSelector} from 'react-redux';
-export default function Reellist({navigation, name, id, t, image, imagename}) {
-  const currentUser = auth.currentUser;
-  const user = useSelector(state => state.user.user);
-  const file = {
-    uri: image,
-    name: imagename,
-    type: 'image/png',
-  };
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
 
-  const options = {
-    keyPrefix: `uploads/${currentUser.uid}/`,
-    bucket: 'shotoclick',
-    region: 'ap-south-1',
-    accessKey: 'AKIAR77UFFI6JWKBCVUU',
-    secretKey: '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',
-    successActionStatus: 201,
-  };
+export default function Reellist({navigation, name, id, t, image, imagename}) {
+  const db = firestore();
+  const user = useSelector(state => state.user.user);
   const dispatch = useDispatch();
   const [reelusers, setreelusers] = useState([]);
   const [images, setimages] = useState([]);
@@ -58,7 +44,6 @@ export default function Reellist({navigation, name, id, t, image, imagename}) {
         setimages(
           val.docs.map(doc => ({
             id: doc.id,
-            localimage: FileSystem.documentDirectory + doc.id + '.jpg',
             imagess: doc.data(),
           })),
         );
@@ -67,7 +52,6 @@ export default function Reellist({navigation, name, id, t, image, imagename}) {
   }, [id]);
 
   const upload = () => {
-    navigation.navigate('ReelView');
     db.collection('reels')
       .doc(id)
       .collection('reelimages')
@@ -82,6 +66,11 @@ export default function Reellist({navigation, name, id, t, image, imagename}) {
       .then(res => {
         dispatch(clearScrollData());
         dispatch(setindex(0));
+        navigation.navigate('ReelView', {
+          image: image,
+          imagename: imagename,
+          reelid: res.id,
+        });
         dispatch(
           Addreeldata({
             reelname: name,
@@ -89,24 +78,6 @@ export default function Reellist({navigation, name, id, t, image, imagename}) {
             imageslength: images.length,
           }),
         );
-
-        RNS3.put(file, options).then(response => {
-          if (response.status !== 201) {
-            alert('Some error occurred');
-          } else {
-            try {
-              db.collection('reels')
-                .doc(id)
-                .collection('reelimages')
-                .doc(res.id)
-                .update({
-                  imageurl: response.body.postResponse.location,
-                });
-            } catch (error) {
-              alert(error.message);
-            }
-          }
-        });
       });
   };
 

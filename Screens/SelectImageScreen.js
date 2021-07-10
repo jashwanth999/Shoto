@@ -11,10 +11,11 @@ import {
 import {Header} from 'react-native-elements';
 import {Ionicons, MaterialIcons} from '../Styles/Icons';
 import SelectImageReelList from '../Components/SelectImageReelList';
-import {db} from '../Security/firebase';
+import firestore from '@react-native-firebase/firestore';
 import {useSelector} from 'react-redux';
 export default function SelectImageScreen({navigation, route}) {
   const {image, imagename} = route.params;
+  const db=firestore()
   const user = useSelector(state => state.user.user);
   const [search, setSearch] = useState('');
   const [reels, setReels] = useState([]);

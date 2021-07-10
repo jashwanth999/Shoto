@@ -3,9 +3,10 @@ import {StyleSheet, View, TouchableOpacity, Text} from 'react-native';
 import {MaterialCommunityIcons, MaterialIcons} from '../Styles/Icons';
 import ImagePicker from 'react-native-image-crop-picker';
 import {useDispatch, useSelector} from 'react-redux';
-import {clearScrollData, setindex, updateLocalImages} from '../actions';
-import {db} from '../Security/firebase';
-function Footer2({navigation}) {
+import {clearScrollData, setindex} from '../actions';
+import firestore from '@react-native-firebase/firestore';
+function Footer2({navigation, reelname}) {
+  const db = firestore();
   var today = new Date();
   today =
     parseInt(today.getMonth() + 1) +
@@ -35,8 +36,10 @@ function Footer2({navigation}) {
           uploaderpropic: user.profilepic,
           timestamp: new Date(),
           uploadername: user.username,
+          localimage: image.path,
         })
         .then(res => {
+          console.log(res.id);
           navigation.navigate('ReelView', {
             image: image.path,
             imagename: image.path.replace(/^.*[\\\/]/, ''),
@@ -49,7 +52,7 @@ function Footer2({navigation}) {
     <View style={styles.container}>
       <TouchableOpacity
         onPress={() => {
-          navigation.navigate('Adduserlist');
+          navigation.navigate('Adduserlist', {reelname: reelname});
         }}
         style={styles.fotterView}>
         <MaterialIcons name="person-add" color="#d4d4d4" size={24} />

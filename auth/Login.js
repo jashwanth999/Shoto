@@ -10,8 +10,6 @@ import {
   BackHandler,
 } from 'react-native';
 
-import {auth, db} from '../Security/firebase.js';
-import firebase from '@firebase/app';
 import {Adduser} from '../actions.js';
 import {useDispatch} from 'react-redux';
 import {useFocusEffect} from '@react-navigation/native';
@@ -20,8 +18,13 @@ import {
   statusCodes,
 } from '@react-native-google-signin/google-signin';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
+import firebase from '@react-native-firebase/app';
 export default function Login({navigation}) {
-  const [act, setact] = useState(true); // Activity Indicator
+  const [act, setact] = useState(true); 
+  // Activity Indicator
+ 
 
   // configure google singin OAuth client id
 
@@ -30,9 +33,7 @@ export default function Login({navigation}) {
     webClientId:
       '821295087358-f7nsmu3rup0ghfflnvk7ret61mv49gec.apps.googleusercontent.com', // client ID of type WEB for your server (needed to verify user ID and offline access)
     offlineAccess: true, // if you want to access Google API on behalf of the user FROM YOUR SERVER
-    
   });
-
 
   const dispatch = useDispatch();
 
@@ -68,22 +69,25 @@ export default function Login({navigation}) {
   };
 
   const onSignIn = async googleUser => {
-    var unsubscribe = auth.onAuthStateChanged(async firebaseUser => {
+    var unsubscribe = auth().onAuthStateChanged(async firebaseUser => {
       unsubscribe();
       if (!isUserEqual(googleUser, firebaseUser)) {
         var credential = firebase.auth.GoogleAuthProvider.credential(
           googleUser.idToken,
           googleUser.accessToken,
         );
-        auth
+        auth()
           .signInWithCredential(credential)
           .then(async authUser => {
-            await db.collection('users').doc(googleUser.user.email).set({
-              username: googleUser.user.name,
-              email: googleUser.user.email,
-              profilepic: googleUser.user.photo,
-              timestamp: new Date(),
-            });
+            await firestore()
+              .collection('users')
+              .doc(googleUser.user.email)
+              .set({
+                username: googleUser.user.name,
+                email: googleUser.user.email,
+                profilepic: googleUser.user.photo,
+                timestamp: new Date(),
+              });
             await AsyncStorage.setItem('email', googleUser.user.email);
             await AsyncStorage.setItem('profilepic', googleUser.user.photo);
             await AsyncStorage.setItem('username', googleUser.user.name);

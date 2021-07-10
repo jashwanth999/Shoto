@@ -11,10 +11,10 @@ import {Ionicons, MaterialCommunityIcons} from '../Styles/Icons';
 import {Overlay} from 'react-native-elements';
 import {useDispatch, useSelector} from 'react-redux';
 import {Addreeldata, setChange} from '../actions';
-import {db} from '../Security/firebase';
+import firestore from '@react-native-firebase/firestore';
 import ImagePicker from 'react-native-image-crop-picker';
-import firebase from '@firebase/app';
 function Footer({navigation}) {
+  const db = firestore();
   const dispatch = useDispatch();
 
   const changed = useSelector(state => state.changed.changed);
@@ -41,17 +41,19 @@ function Footer({navigation}) {
 
     if (!reelnames.includes(reelname.toLowerCase())) {
       try {
-        setact(true);
+        navigation.navigate('Adduserlist', {reelname: reelname});
+        toggleOverlay();
+
         db.collection('user_reels')
           .doc(user.email)
           .collection('reellist')
           .add({
             reelname: reelname,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            timestamp: new Date(),
           })
           .then(res => {
             setact(false);
-            navigation.navigate('Adduserlist');
+
             dispatch(
               Addreeldata({
                 useremail: user.email,
@@ -61,12 +63,10 @@ function Footer({navigation}) {
               }),
             );
 
-            toggleOverlay();
-
             db.collection('reels').doc(res.id).set({
               created_useremail: user.email,
               reelname: reelname,
-              created_at: firebase.firestore.FieldValue.serverTimestamp(),
+              created_at: new Date(),
             });
             db.collection('reels')
               .doc(res.id)
@@ -75,14 +75,13 @@ function Footer({navigation}) {
               .set({
                 useremail: user.email,
                 reelid: res.id,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                timestamp: new Date(),
                 profilepic: user.profilepic,
               });
 
             dispatch(setChange(!changed));
           });
       } catch (error) {
-        setact(false);
         toggleOverlay();
       }
     } else {

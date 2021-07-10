@@ -4,8 +4,7 @@ import Login from '../auth/Login.js';
 import ShotoHome from '../Components/ShotoHome.js';
 import ReelView from '../Components/ReelView.js';
 import ImageView from '../Components/ImageView.js';
-import Splashscreen from '../Components/Splashscreen';
-import Reelcamerapost from '../camera/Reelcamerapost.js';
+import Splashscreen from '../Components/Splashscreen';;
 import Adduserslist from '../Components/Addcontributors/Adduserslist.js';
 import Photoview from '../Components/Photoview.js';
 import UserProfile from '../Screens/UserProfile.js';
@@ -27,7 +26,7 @@ export default function StackNavigator() {
       <Stack.Screen name="Photoview" component={Photoview} />
       <Stack.Screen name="userprofile" component={UserProfile} />
       <Stack.Screen name="selectimagescreen" component={SelectImageScreen} />
-      <Stack.Screen name="Reelcamerapost" component={Reelcamerapost} />
+     
     </Stack.Navigator>
   );
 }

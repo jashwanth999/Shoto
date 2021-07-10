@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useCallback, useMemo} from 'react';
+import React, {useEffect, useState, useCallback} from 'react';
 import {
   View,
   StyleSheet,
@@ -14,21 +14,16 @@ import {Ionicons} from '../Styles/Icons.js';
 import Imagecard from './Imagecard.js';
 import Thumbnail from './Thumbnail.js';
 import {useSelector, useDispatch} from 'react-redux';
-import {
-  Addreelimages,
-  clearScrollData,
-  setindex,
-  updateReelImages,
-} from '../actions.js';
-import {auth, db} from '../Security/firebase.js';
+import {Addreelimages, clearScrollData, setindex} from '../actions.js';
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
 import * as FileSystem from 'expo-file-system';
 import Footer2 from '../Screens/Footer2.js';
 import {useFocusEffect} from '@react-navigation/native';
 import {RNS3} from 'react-native-aws3';
 export default function ReelView({navigation, route}) {
+  const db = firestore();
   const {image, imagename, reelid} = route.params;
-  let onEndReacheMomentum = false;
-
   const [flatRef, setFlatRef] = useState();
   const dispatch = useDispatch();
   const [lastPosition, setLastPosition] = useState(false);
@@ -39,9 +34,8 @@ export default function ReelView({navigation, route}) {
 
   const reeldata = useSelector(state => state.reeldata.reeldata);
   const [spinner, setSpinner] = useState(false);
-  const user = useSelector(state => state.user.user);
 
-  const currentUser = auth.currentUser;
+  const currentUser = auth().currentUser;
   const file = {
     uri: image,
     name: imagename,
@@ -163,6 +157,7 @@ export default function ReelView({navigation, route}) {
         profilepic={item.reelimages?.uploaderpropic}
         time={item.reelimages?.time}
         image={image}
+        localimage={item.reelimages?.localimage}
       />
     );
   }, []);
@@ -257,9 +252,7 @@ export default function ReelView({navigation, route}) {
       />
       <StatusBar backgroundColor="#1d2533" />
       {reelimages === null ? (
-        <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-          <ActivityIndicator size="large" color="grey" />
-        </View>
+        <LoadingView />
       ) : (
         <View style={{display: 'flex', flexDirection: 'row', flex: 1}}>
           <View style={styles.imagesview}>
@@ -277,10 +270,7 @@ export default function ReelView({navigation, route}) {
               renderItem={renderImage}
               keyExtractor={item => item.id}
               onEndReached={() => {
-                if (!onEndReacheMomentum && !lastPosition) {
-                  loadMore();
-                  onEndReacheMomentum = true;
-                }
+                loadMore();
               }}
               onEndReachedThreshold={0}
               ListFooterComponent={renderFooter}
@@ -307,10 +297,18 @@ export default function ReelView({navigation, route}) {
           </View>
         </View>
       )}
-      <Footer2 navigation={navigation} />
+      <Footer2 navigation={navigation} reelname={reeldata.reelname} />
     </View>
   );
 }
+const LoadingView = () => {
+  return (
+    <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+      <ActivityIndicator size="large" color="grey" />
+    </View>
+  );
+};
+
 const styles = StyleSheet.create({
   headernamecontainer: {
     display: 'flex',

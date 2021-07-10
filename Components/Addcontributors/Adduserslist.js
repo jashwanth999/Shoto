@@ -12,18 +12,19 @@ import {
 import {Header} from 'react-native-elements';
 import {Ionicons, MaterialCommunityIcons} from '../../Styles/Icons';
 import Userlist from './Userlist';
-import {db} from '../../Security/firebase';
 import {useSelector, useDispatch} from 'react-redux';
 import {reeluseremail} from '../../actions';
-import firebase from '@firebase/app';
-export default function Adduserslist({navigation}) {
+import firestore from '@react-native-firebase/firestore';
+
+export default function Adduserslist({navigation, route}) {
+  const {reelname} = route.params;
+  const db = firestore();
   const [profilepic, setprofilepic] = useState(null);
   const [inputemail, setinputemail] = useState('');
   const [act, setact] = useState(true);
 
   const [admin, setAdmin] = useState('');
 
-  
   const dispatch = useDispatch();
 
   // get emails list stored in reducers
@@ -80,7 +81,6 @@ export default function Adduserslist({navigation}) {
     }
   }, [inputemail]);
   const add = async () => {
-
     // adding users to reels
 
     if (inputemail && validateEmail(inputemail.toLowerCase())) {
@@ -96,7 +96,7 @@ export default function Adduserslist({navigation}) {
             profilepic: profilepic
               ? profilepic
               : 'https://res.cloudinary.com/jashwanth/image/upload/v1624182501/60111_nihqdw.jpg',
-            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            timestamp: new Date(),
             reelid: reeldata.reelid,
           })
           .then(async () => {
@@ -107,7 +107,7 @@ export default function Adduserslist({navigation}) {
               .doc(reeldata.reelid)
               .set({
                 reelname: reeldata.reelname,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                timestamp: new Date(),
               });
           });
         setinputemail('');
@@ -142,12 +142,15 @@ export default function Adduserslist({navigation}) {
               numberOfLines={1}
               ellipsizeMode="tail"
               style={{color: 'white', fontSize: 16, fontWeight: 'bold'}}>
-              {reeldata.reelname}
+              {reelname}
             </Text>
           </View>
         }
         rightComponent={
-          <TouchableOpacity onPress={() => navigation.navigate('Shotohome')}>
+          <TouchableOpacity
+            onPress={() => {
+              navigation.navigate('Shotohome');
+            }}>
             <MaterialCommunityIcons
               name="checkbox-marked-circle-outline"
               color="white"

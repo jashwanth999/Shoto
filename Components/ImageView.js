@@ -11,13 +11,14 @@ import {
 import Comments from './Comments.js';
 import {Ionicons} from '../Styles/Icons.js';
 import {useSelector, useDispatch} from 'react-redux';
-import {db} from '../Security/firebase.js';
+import firestore from '@react-native-firebase/firestore'
 import {AddComments} from '../actions.js';
 import FastImage from 'react-native-fast-image';
 export default function ImageView({navigation, route}) {
   const user = useSelector(state => state.user.user);
   const {imageurl, reelid, uploaderid, uploadername, imageid, t} = route.params;
   const commentslist = useSelector(state => state.Comments.comments);
+  const db=firestore()
   const [comment, setComment] = useState('');
   const dispatch = useDispatch();
   const submitcomment = () => {

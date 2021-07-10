@@ -2,20 +2,13 @@ import React, {useEffect, useState} from 'react';
 import {View, StyleSheet, Text, TouchableOpacity} from 'react-native';
 import {MaterialIcons} from '../Styles/Icons.js';
 import {useDispatch, useSelector} from 'react-redux';
-import {
-  Addreeldata,
-  clearScrollData,
-  setindex,
-  updateLocalImages,
-} from '../actions.js';
-import {db, auth} from '../Security/firebase.js';
-
+import {Addreeldata, clearScrollData, setindex} from '../actions.js';
 import FastImage from 'react-native-fast-image';
-
 import ImagePicker from 'react-native-image-crop-picker';
-import {RNS3} from 'react-native-aws3';
+import firestore from '@react-native-firebase/firestore';
 
 export default function Reellist({navigation, name, id, t}) {
+  const db = firestore();
   const dispatch = useDispatch();
   const [reelusers, setreelusers] = useState([]);
   const [images, setimages] = useState([]);
@@ -61,7 +54,7 @@ export default function Reellist({navigation, name, id, t}) {
     ':' +
     today.getMinutes();
 
-  const setreel = () => {
+  const setReel = () => {
     // set reel details to reducers
     dispatch(
       Addreeldata({
@@ -74,10 +67,11 @@ export default function Reellist({navigation, name, id, t}) {
     navigation.navigate('ReelView', {
       image: '',
       imagename: '',
+      reelid: '',
     });
   };
 
-  const Clickapic = () => {
+  const ClickaPic = () => {
     ImagePicker.openCamera({
       width: 300,
       height: 400,
@@ -111,9 +105,12 @@ export default function Reellist({navigation, name, id, t}) {
     });
   };
   return (
-    <View style={[styles.container]}>
+    <TouchableOpacity
+      activeOpacity={0.8}
+      onPress={setReel}
+      style={[styles.container]}>
       {/* The upper part of the card leads to the reel screen */}
-      <TouchableOpacity activeOpacity={0.8} onPress={setreel}>
+      <TouchableOpacity>
         <View style={styles.titleContainer}>
           <Text style={styles.titleText}>{name}</Text>
 
@@ -124,11 +121,8 @@ export default function Reellist({navigation, name, id, t}) {
         </View>
 
         <View style={styles.thumbnailsContainer}>
-          {images.slice(0, 4).map(image => (
-            <ImageThumbnail
-              key={image.imagess.imageurl}
-              imageUri={image.imagess?.imageurl}
-            />
+          {images.slice(0, 4).map((image, index) => (
+            <ImageThumbnail key={index} imageUri={image.imagess?.imageurl} />
           ))}
         </View>
       </TouchableOpacity>
@@ -145,7 +139,7 @@ export default function Reellist({navigation, name, id, t}) {
           />
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
