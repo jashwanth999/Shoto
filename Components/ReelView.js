@@ -17,7 +17,7 @@ import {useSelector, useDispatch} from 'react-redux';
 import {Addreelimages, clearScrollData, setindex} from '../actions.js';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
-import * as FileSystem from 'expo-file-system';
+// import * as FileSystem from 'expo-file-system';
 import Footer2 from '../Screens/Footer2.js';
 import {useFocusEffect} from '@react-navigation/native';
 import {RNS3} from 'react-native-aws3';
@@ -117,7 +117,7 @@ export default function ReelView({navigation, route}) {
             snapshot.docs.map(doc => ({
               id: doc.id,
               reelimages: doc.data(),
-              localimage: FileSystem.documentDirectory + doc.id + '.jpg',
+              // localimage: FileSystem.documentDirectory + doc.id + '.jpg',
             })),
           ),
         );
