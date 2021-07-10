@@ -7,23 +7,32 @@ import {
   TextInput,
   ActivityIndicator,
 } from 'react-native';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import {Ionicons, MaterialCommunityIcons} from '../Styles/Icons';
 import {Overlay} from 'react-native-elements';
 import {useDispatch, useSelector} from 'react-redux';
 import {Addreeldata, setChange} from '../actions';
-import {db} from '../Security/firebase';
-import {launchCamera} from 'react-native-image-picker';
+import firestore from '@react-native-firebase/firestore';
 import ImagePicker from 'react-native-image-crop-picker';
-
 function Footer({navigation}) {
+  const db = firestore();
   const dispatch = useDispatch();
+
   const changed = useSelector(state => state.changed.changed);
+
+  // user details
+
   const user = useSelector(state => state.user.user);
+
+  //  list of all reel names of a user
+
   const reelnames = useSelector(state => state.reelnames.Reelnames);
+
   const [visible, setVisible] = useState(false);
-  const [act, setact] = useState(false);
-  const [reelname, setreelname] = useState('');
+
+  const [act, setact] = useState(false); // activity indicator
+
+  const [reelname, setreelname] = useState(''); // text input value
+
   const toggleOverlay = () => {
     setVisible(!visible);
   };
@@ -31,8 +40,10 @@ function Footer({navigation}) {
     // checking whether the reelname is previously used or not
 
     if (!reelnames.includes(reelname.toLowerCase())) {
-      setact(true);
       try {
+        navigation.navigate('Adduserlist', {reelname: reelname});
+        toggleOverlay();
+
         db.collection('user_reels')
           .doc(user.email)
           .collection('reellist')
@@ -42,20 +53,19 @@ function Footer({navigation}) {
           })
           .then(res => {
             setact(false);
+
             dispatch(
               Addreeldata({
                 useremail: user.email,
                 reelname: reelname,
                 reelid: res.id,
-                seen: 0,
                 username: user.username,
               }),
             );
+
             db.collection('reels').doc(res.id).set({
               created_useremail: user.email,
               reelname: reelname,
-              contributors: 0,
-              seen: 0,
               created_at: new Date(),
             });
             db.collection('reels')
@@ -69,39 +79,22 @@ function Footer({navigation}) {
                 profilepic: user.profilepic,
               });
 
-            navigation.navigate('Adduserlist');
             dispatch(setChange(!changed));
-            toggleOverlay();
           });
       } catch (error) {
-        alert(error.message);
-        setact(false);
         toggleOverlay();
       }
     } else {
       // if reelname already exist it alerts
 
-      alert('Reelname Already Exist please change the reelname');
+      alert('Reelname already exist please change the reelname');
     }
     setreelname('');
   };
+
+  // take photo it navigates to save image screen
+
   const takePhoto = async () => {
-    /*ImagePicker.launchCamera(
-      {
-        aspect: [5, 4],
-        quality: 1,
-        base64: true,
-      },
-      response => {
-        if (response.didCancel) {
-        } else {
-          navigation.navigate('selectimagescreen', {
-            image: response?.assets[0].uri,
-            imagename: response?.assets[0].uri.replace(/^.*[\\\/]/, ''),
-          });
-        }
-      },
-    );*/
     ImagePicker.openCamera({
       width: 300,
       height: 400,
@@ -123,6 +116,7 @@ function Footer({navigation}) {
         <MaterialCommunityIcons name="movie-roll" color="#d4d4d4" size={24} />
         <Text style={styles.text}>New reel</Text>
       </TouchableOpacity>
+
       <TouchableOpacity onPress={takePhoto} style={styles.middleIcon}>
         <MaterialCommunityIcons name="camera-iris" color="#d4d4d4" size={34} />
       </TouchableOpacity>

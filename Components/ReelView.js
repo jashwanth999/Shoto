@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useCallback, useMemo} from 'react';
+import React, {useEffect, useState, useCallback} from 'react';
 import {
   View,
   StyleSheet,
@@ -10,28 +10,68 @@ import {
   BackHandler,
 } from 'react-native';
 import {Header} from 'react-native-elements';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import {Ionicons} from '../Styles/Icons.js';
 import Imagecard from './Imagecard.js';
 import Thumbnail from './Thumbnail.js';
 import {useSelector, useDispatch} from 'react-redux';
-import {
-  Addreelimages,
-  clearScrollData,
-  setindex,
-  updateReelImages,
-} from '../actions.js';
-import {db} from '../Security/firebase.js';
+import {Addreelimages, clearScrollData, setindex} from '../actions.js';
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
 import * as FileSystem from 'expo-file-system';
 import Footer2 from '../Screens/Footer2.js';
 import {useFocusEffect} from '@react-navigation/native';
-export default function ReelView({navigation}) {
-  let onEndReacheMomentum = false;
+import {RNS3} from 'react-native-aws3';
+export default function ReelView({navigation, route}) {
+  const db = firestore();
+  const {image, imagename, reelid} = route.params;
   const [flatRef, setFlatRef] = useState();
   const dispatch = useDispatch();
   const [lastPosition, setLastPosition] = useState(false);
   const [startAfter, setstartAfter] = useState(null);
   const [data, setData] = useState([]);
+
+  // get details of reels stored in reducers
+
+  const reeldata = useSelector(state => state.reeldata.reeldata);
   const [spinner, setSpinner] = useState(false);
+
+  const currentUser = auth().currentUser;
+  const file = {
+    uri: image,
+    name: imagename,
+    type: 'image/png',
+  };
+  const options = {
+    keyPrefix: `uploads/${currentUser.uid}/`,
+    bucket: 'shotoclick',
+    region: 'ap-south-1',
+    accessKey: 'AKIAR77UFFI6JWKBCVUU',
+    secretKey: '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',
+    successActionStatus: 201,
+  };
+
+  const uploadImage = () => {
+    try {
+      RNS3.put(file, options).then(response => {
+        if (response.status !== 201) {
+          alert('Some error occurred');
+        } else {
+          db.collection('reels')
+            .doc(reeldata.reelid)
+            .collection('reelimages')
+            .doc(reelid)
+            .update({
+              imageurl: response.body.postResponse.location,
+            });
+        }
+      });
+    } catch (err) {}
+  };
+  useEffect(() => {
+    if (image) {
+      uploadImage();
+    }
+  }, [image]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -49,15 +89,9 @@ export default function ReelView({navigation}) {
 
   const yof = useSelector(state => state.y.y);
 
-  // get Y coordinates of image card  stored in reducers
-
   // get images of reels stored in reducers
 
   const reelimages = useSelector(state => state.reellistimages.reellistimages);
-
-  // get details of reels stored in reducers
-
-  const reeldata = useSelector(state => state.reeldata.reeldata);
 
   // get reelimages  from firestore
 
@@ -86,13 +120,6 @@ export default function ReelView({navigation}) {
               localimage: FileSystem.documentDirectory + doc.id + '.jpg',
             })),
           ),
-        );
-        setData(
-          snapshot.docs.map(doc => ({
-            id: doc.id,
-            reelimages: doc.data(),
-            localimage: FileSystem.documentDirectory + doc.id + '.jpg',
-          })),
         );
       });
 
@@ -124,11 +151,13 @@ export default function ReelView({navigation}) {
         uploaderid={item.reelimages?.uploadedby}
         reelid={reeldata.reelid}
         navigation={navigation}
-        timestamp={3}
         t={new Date(item.reelimages?.timestamp.seconds * 1000).toUTCString()}
         uploadername={item.reelimages?.uploadername}
         useremail={reeldata.useremail}
-        profilepic={item.reelimages?.profilepic}
+        profilepic={item.reelimages?.uploaderpropic}
+        time={item.reelimages?.time}
+        image={image}
+        localimage={item.reelimages?.localimage}
       />
     );
   }, []);
@@ -175,7 +204,6 @@ export default function ReelView({navigation}) {
                 })),
               ]),
             );
-
             setData([
               ...data,
               ...snapshot.docs.map(doc => ({
@@ -224,9 +252,7 @@ export default function ReelView({navigation}) {
       />
       <StatusBar backgroundColor="#1d2533" />
       {reelimages === null ? (
-        <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-          <ActivityIndicator size="large" color="grey" />
-        </View>
+        <LoadingView />
       ) : (
         <View style={{display: 'flex', flexDirection: 'row', flex: 1}}>
           <View style={styles.imagesview}>
@@ -238,16 +264,13 @@ export default function ReelView({navigation}) {
               removeClippedSubviews={false}
               onEndReachedThreshold={0.1}
               showsVerticalScrollIndicator={false}
-              data={data}
+              data={reelimages}
               ref={ref => setFlatRef(ref)}
               getItemLayout={getItemLayout}
               renderItem={renderImage}
               keyExtractor={item => item.id}
               onEndReached={() => {
-                if (!onEndReacheMomentum && !lastPosition) {
-                  loadMore();
-                  onEndReacheMomentum = true;
-                }
+                loadMore();
               }}
               onEndReachedThreshold={0}
               ListFooterComponent={renderFooter}
@@ -265,7 +288,7 @@ export default function ReelView({navigation}) {
               removeClippedSubviews={false}
               onEndReachedThreshold={0.1}
               showsVerticalScrollIndicator={false}
-              data={data}
+              data={reelimages}
               renderItem={renderThumbnail}
               keyExtractor={item => item.id}
               onEndReached={loadMore}
@@ -274,10 +297,18 @@ export default function ReelView({navigation}) {
           </View>
         </View>
       )}
-      <Footer2 navigation={navigation} />
+      <Footer2 navigation={navigation} reelname={reeldata.reelname} />
     </View>
   );
 }
+const LoadingView = () => {
+  return (
+    <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+      <ActivityIndicator size="large" color="grey" />
+    </View>
+  );
+};
+
 const styles = StyleSheet.create({
   headernamecontainer: {
     display: 'flex',

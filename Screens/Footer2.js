@@ -1,29 +1,58 @@
 import React from 'react';
 import {StyleSheet, View, TouchableOpacity, Text} from 'react-native';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import {MaterialCommunityIcons, MaterialIcons} from '../Styles/Icons';
 import ImagePicker from 'react-native-image-crop-picker';
-function Footer2({navigation}) {
-  const takePhoto2 = async () => {
+import {useDispatch, useSelector} from 'react-redux';
+import {clearScrollData, setindex} from '../actions';
+import firestore from '@react-native-firebase/firestore';
+function Footer2({navigation, reelname}) {
+  const db = firestore();
+  var today = new Date();
+  today =
+    parseInt(today.getMonth() + 1) +
+    ' ' +
+    today.getDate() +
+    ' ' +
+    today.getHours() +
+    ':' +
+    today.getMinutes();
+  //const currentUser = auth.currentUser;
+  const dispatch = useDispatch();
+  const user = useSelector(state => state.user.user);
+  const reeldata = useSelector(state => state.reeldata.reeldata);
+  const takePhoto2 = () => {
     ImagePicker.openCamera({
       width: 300,
       height: 400,
-    })
-      .then(image => {
-        navigation.navigate('Reelcamerapost', {
-          image: image.path,
-          imagename: image.path.replace(/^.*[\\\/]/, ''),
+    }).then(image => {
+      dispatch(clearScrollData());
+      dispatch(setindex(0));
+      db.collection('reels')
+        .doc(reeldata.reelid)
+        .collection('reelimages')
+        .add({
+          uploadedby: user.email,
+          imageurl: image.path,
+          uploaderpropic: user.profilepic,
+          timestamp: new Date(),
+          uploadername: user.username,
+          localimage: image.path,
+        })
+        .then(res => {
+          console.log(res.id);
+          navigation.navigate('ReelView', {
+            image: image.path,
+            imagename: image.path.replace(/^.*[\\\/]/, ''),
+            reelid: res.id,
+          });
         });
-      })
-      .catch(err => {
-        // Here you handle if the user cancels or any other errors
-      });
+    });
   };
   return (
     <View style={styles.container}>
       <TouchableOpacity
         onPress={() => {
-          navigation.navigate('Adduserlist');
+          navigation.navigate('Adduserlist', {reelname: reelname});
         }}
         style={styles.fotterView}>
         <MaterialIcons name="person-add" color="#d4d4d4" size={24} />

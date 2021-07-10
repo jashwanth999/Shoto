@@ -122,3 +122,9 @@ export const updateReelImages = images => {
     payload: images,
   };
 };
+export const updateLocalImages = localimagedata => {
+  return {
+    type: 'UPDATE_LOCAL_IMAGES',
+    payload: localimagedata,
+  };
+};

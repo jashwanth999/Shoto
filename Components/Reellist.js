@@ -1,32 +1,33 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { useDispatch } from 'react-redux';
-import { Addreeldata } from '../actions.js';
-import { db, auth } from '../Security/firebase.js';
-import * as FileSystem from 'expo-file-system';
+import React, {useEffect, useState} from 'react';
+import {View, StyleSheet, Text, TouchableOpacity} from 'react-native';
+import {MaterialIcons} from '../Styles/Icons.js';
+import {useDispatch, useSelector} from 'react-redux';
+import {Addreeldata, clearScrollData, setindex} from '../actions.js';
 import FastImage from 'react-native-fast-image';
 import ImagePicker from 'react-native-image-crop-picker';
-import { createImageProgress } from 'react-native-image-progress';
+import firestore from '@react-native-firebase/firestore';
 
-export default function Reellist({ navigation, name, id, t }) {
-  const Image = createImageProgress(FastImage);
+export default function Reellist({navigation, name, id, t}) {
+  const db = firestore();
   const dispatch = useDispatch();
   const [reelusers, setreelusers] = useState([]);
   const [images, setimages] = useState([]);
-  const user = auth.currentUser;
+  const user = useSelector(state => state.user.user);
 
   useEffect(() => {
-    const unsubscribe = db
-      .collection('reels')
-      .doc(id)
-      .collection('reelusers')
-      .where('useremail', '!=', user?.email)
-      .onSnapshot(snapshot => {
-        setreelusers(snapshot.docs.map(doc => doc.data()));
-      });
-    return unsubscribe;
+    if (user?.email) {
+      const unsubscribe = db
+        .collection('reels')
+        .doc(id)
+        .collection('reelusers')
+        .where('useremail', '!=', user?.email)
+        .onSnapshot(snapshot => {
+          setreelusers(snapshot.docs.map(doc => doc.data()));
+        });
+      return unsubscribe;
+    }
   }, [id]);
+
   useEffect(() => {
     const unsubscribe = db
       .collection('reels')
@@ -37,15 +38,23 @@ export default function Reellist({ navigation, name, id, t }) {
         setimages(
           val.docs.map(doc => ({
             id: doc.id,
-            localimage: FileSystem.documentDirectory + doc.id + '.jpg',
             imagess: doc.data(),
           })),
         );
       });
     return unsubscribe;
   }, [id]);
+  var today = new Date();
+  today =
+    parseInt(today.getMonth() + 1) +
+    ' ' +
+    today.getDate() +
+    ' ' +
+    today.getHours() +
+    ':' +
+    today.getMinutes();
 
-  const setreel = () => {
+  const setReel = () => {
     // set reel details to reducers
     dispatch(
       Addreeldata({
@@ -55,84 +64,86 @@ export default function Reellist({ navigation, name, id, t }) {
       }),
     );
     // navigating to reelview
-    navigation.navigate('ReelView', { from: 'home' });
+    navigation.navigate('ReelView', {
+      image: '',
+      imagename: '',
+      reelid: '',
+    });
   };
 
-  const ClickaPic = async () => {
+  const ClickaPic = () => {
     ImagePicker.openCamera({
       width: 300,
       height: 400,
-    })
-      .then(image => {
-        dispatch(
-          Addreeldata({
-            reelname: name,
-            reelid: id,
-            imageslength: images.length,
-          }),
-        );
-        navigation.navigate('Reelcamerapost', {
-          image: image.path,
-          imagename: image.path.replace(/^.*[\\\/]/, ''),
+    }).then(image => {
+      dispatch(
+        Addreeldata({
+          reelname: name,
+          reelid: id,
+          imageslength: images.length,
+        }),
+      );
+      dispatch(clearScrollData());
+      dispatch(setindex(0));
+      db.collection('reels')
+        .doc(id)
+        .collection('reelimages')
+        .add({
+          uploadedby: user.email,
+          imageurl: image.path,
+          uploaderpropic: user.profilepic,
+          timestamp: new Date(),
+          uploadername: user.username,
+        })
+        .then(res => {
+          navigation.navigate('ReelView', {
+            image: image.path,
+            imagename: image.path.replace(/^.*[\\\/]/, ''),
+            reelid: res.id,
+          });
         });
-      })
-      .catch(err => {
-        // Here you handle if the user cancels or any other errors
-      });
+    });
   };
-
   return (
-    <View style={[styles.container]}>
-
+    <TouchableOpacity
+      activeOpacity={0.8}
+      onPress={setReel}
+      style={[styles.container]}>
       {/* The upper part of the card leads to the reel screen */}
-      <TouchableOpacity
-        activeOpacity={0.8}
-        onPress={setreel}>
-
+      <TouchableOpacity>
         <View style={styles.titleContainer}>
-
-          <Text style={styles.titleText}>
-            {name}
-          </Text>
+          <Text style={styles.titleText}>{name}</Text>
 
           <Text style={styles.infoText}>
-            {t.split(' ')[0]} {t.split(' ')[1]} {t.split(' ')[2]} {" - "}
+            {t.split(' ')[0]} {t.split(' ')[1]} {t.split(' ')[2]} {' - '}
             {images.length} photos
           </Text>
-
         </View>
 
         <View style={styles.thumbnailsContainer}>
-          {images.slice(0, 4).map((image) =>
-            <ImageThumbnail
-              key={image.imagess.imageurl}
-              imageUri={image.imagess?.imageurl}
-            />
-          )}
+          {images.slice(0, 4).map((image, index) => (
+            <ImageThumbnail key={index} imageUri={image.imagess?.imageurl} />
+          ))}
         </View>
-
       </TouchableOpacity>
 
       <View style={styles.bottomContainer}>
-
         <ContributorsPics reelUsers={reelusers} />
 
         <TouchableOpacity onPress={ClickaPic} style={styles.clickaPicButton}>
           <Text style={styles.clickaPicButtonText}>CLICK</Text>
-          <MaterialIcons 
-            name="chevron-right" 
-            color="rgba(36, 123, 160, 0.8)" 
+          <MaterialIcons
+            name="chevron-right"
+            color="rgba(36, 123, 160, 0.8)"
             size={20}
           />
         </TouchableOpacity>
-
       </View>
-
-    </View>
+    </TouchableOpacity>
   );
 }
 
-const ContributorsPics = ({ reelUsers }) => {
+const ContributorsPics = ({reelUsers}) => {
   return (
     <View style={styles.contributorsView}>
       {reelUsers.map((users, index) => {
@@ -140,7 +151,7 @@ const ContributorsPics = ({ reelUsers }) => {
           return (
             <FastImage
               key={index}
-              source={{ uri: users.profilepic }}
+              source={{uri: users.profilepic}}
               style={styles.contributorsavatar}
             />
           );
@@ -155,7 +166,7 @@ const ContributorsPics = ({ reelUsers }) => {
             marginLeft: 3,
           }}>
           <MaterialIcons name="add" color="white" size={13} />
-          <Text style={{ color: 'white', marginRight: 10 }}>
+          <Text style={{color: 'white', marginRight: 10}}>
             {reelUsers.length - 3}
           </Text>
         </View>
@@ -163,12 +174,12 @@ const ContributorsPics = ({ reelUsers }) => {
         <View></View>
       )}
     </View>
-  )
-}
+  );
+};
 
-const ImageThumbnail = ({ imageUri }) => {
+const ImageThumbnail = ({imageUri}) => {
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{flex: 1}}>
       <FastImage
         indicatorProps={{
           size: 40,
@@ -187,8 +198,8 @@ const ImageThumbnail = ({ imageUri }) => {
         }}
       />
     </View>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -198,9 +209,9 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
   },
   thumbnailsContainer: {
-    width: "100%",
-    flexDirection: "row",
-    justifyContent: "space-around",
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
     // backgroundColor: 'rgba(18,18,18,1)',
   },
   bottomContainer: {
@@ -228,16 +239,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
-  titleText: { 
-    color:  "rgba(212, 212, 212, 0.8)", 
-    fontSize: 14, 
+  titleText: {
+    color: 'rgba(212, 212, 212, 0.8)',
+    fontSize: 14,
     fontWeight: '800',
     marginVertical: 2,
   },
-  infoText: { 
-    color:  "rgba(212, 212, 212, 0.8)", 
+  infoText: {
+    color: 'rgba(212, 212, 212, 0.8)',
     fontSize: 12,
-    fontWeight: "300"
+    fontWeight: '300',
   },
   clickaPicButton: {
     flexDirection: 'row',
@@ -246,7 +257,7 @@ const styles = StyleSheet.create({
   },
   clickaPicButtonText: {
     // color: "rgba(212, 212, 212, 0.6)",
-    color: "rgba(36, 123, 160, 0.8)",
+    color: 'rgba(36, 123, 160, 0.8)',
     fontWeight: '800',
-  }
+  },
 });

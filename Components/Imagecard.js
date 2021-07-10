@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import {View, StyleSheet, Text} from 'react-native';
-import Octicons from 'react-native-vector-icons/Octicons';
+import {Octicons} from '../Styles/Icons';
 import {TouchableOpacity} from 'react-native';
 import {Avatar} from 'react-native-elements/dist/avatar/Avatar';
 import FastImage from 'react-native-fast-image';
@@ -17,9 +17,9 @@ export default function imagecard({
   t,
   url,
   profilepic,
-  containerStyle
+  containerStyle,
+  time,
 }) {
-  const [loadEnd, setLoadEnd] = useState(true);
   const Image = createImageProgress(FastImage);
 
   return (
@@ -47,10 +47,8 @@ export default function imagecard({
           style={styles.image}
           source={{
             uri: url,
-            priority: FastImage.priority.low,
           }}
         />
-
       </TouchableOpacity>
 
       <View style={styles.cardInfo}>
