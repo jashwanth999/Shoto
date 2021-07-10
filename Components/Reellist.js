@@ -105,12 +105,12 @@ export default function Reellist({navigation, name, id, t}) {
     });
   };
   return (
-    <TouchableOpacity
-      activeOpacity={0.8}
-      onPress={setReel}
-      style={[styles.container]}>
-      {/* The upper part of the card leads to the reel screen */}
-      <TouchableOpacity>
+    <View style={[styles.container]}>
+
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={setReel}>
+        {/* The upper part of the card leads to the reel screen */}
         <View style={styles.titleContainer}>
           <Text style={styles.titleText}>{name}</Text>
 
@@ -139,7 +139,7 @@ export default function Reellist({navigation, name, id, t}) {
           />
         </TouchableOpacity>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 }
 
@@ -242,13 +242,13 @@ const styles = StyleSheet.create({
   titleText: {
     color: 'rgba(212, 212, 212, 0.8)',
     fontSize: 14,
-    fontWeight: '800',
+    fontWeight:  "800",
     marginVertical: 2,
   },
   infoText: {
     color: 'rgba(212, 212, 212, 0.8)',
     fontSize: 12,
-    fontWeight: '300',
+    fontWeight:  "300",
   },
   clickaPicButton: {
     flexDirection: 'row',
@@ -258,6 +258,6 @@ const styles = StyleSheet.create({
   clickaPicButtonText: {
     // color: "rgba(212, 212, 212, 0.6)",
     color: 'rgba(36, 123, 160, 0.8)',
-    fontWeight: '800',
+    fontWeight: "800",
   },
 });
