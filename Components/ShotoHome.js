@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {
   View,
   StyleSheet,
@@ -19,6 +19,7 @@ import {Addreel, Adduser, reelNameAction} from '../actions.js';
 import {useFocusEffect} from '@react-navigation/native';
 import Footer from '../Screens/Footer.js';
 import firestore from '@react-native-firebase/firestore';
+import StartingHomePage from './StartingHomePage.js';
 const wait = timeout => {
   return new Promise(resolve => setTimeout(resolve, timeout));
 };
@@ -37,8 +38,6 @@ export default function ShotoHome({navigation}) {
 
   const reels = useSelector(state => state.reels.reellist);
 
-  
-
   const [startAfter, setStartAfter] = useState(null);
 
   const [LastPosition, setLastPosition] = useState(false);
@@ -46,6 +45,29 @@ export default function ShotoHome({navigation}) {
   const [data, setData] = useState([]);
 
   const [search, setSearch] = useState('');
+  const fetchReelList = async () => {
+    try {
+      return await db
+        .collection('user_reels')
+        .doc(user.email)
+        .collection('reellist')
+        .orderBy('timestamp', 'desc')
+        .limit(5)
+        .get();
+    } catch (error) {}
+  };
+  const fetchReelListMore = async () => {
+    try {
+      return await db
+        .collection('user_reels')
+        .doc(user.email)
+        .collection('reellist')
+        .orderBy('timestamp', 'desc')
+        .startAfter(startAfter)
+        .limit(5)
+        .get();
+    } catch (error) {}
+  };
   // Scroll Down to refresh
   useEffect(() => {
     const unsubscribe = db
@@ -61,6 +83,7 @@ export default function ShotoHome({navigation}) {
       });
     return unsubscribe;
   }, [user?.email]);
+  const changed = useSelector(state => state.changed.changed);
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
@@ -98,6 +121,36 @@ export default function ShotoHome({navigation}) {
   // get Reellist of user and dispatch it
 
   // get first five reels
+  useEffect(() => {
+    let mounted = true;
+    if (mounted && user) {
+      fetchReelList().then(snapshot => {
+        const lastdata = snapshot.docs[snapshot.docs.length - 1];
+        snapshot.docs.length < 5
+          ? setLastPosition(true)
+          : setLastPosition(false);
+        setStartAfter(lastdata);
+        setisLoading(true);
+        dispatch(
+          Addreel(
+            snapshot.docs.map(doc => ({
+              id: doc.id,
+              reellist: doc.data(),
+            })),
+          ),
+        );
+        setData(
+          snapshot.docs.map(doc => ({
+            id: doc.id,
+            reellist: doc.data(),
+          })),
+        );
+      });
+    }
+    return () => {
+      mounted = false;
+    };
+  }, [refreshing, changed, user?.email]);
 
   useEffect(() => {
     if (user?.email) {
@@ -107,70 +160,53 @@ export default function ShotoHome({navigation}) {
         .collection('reellist')
         .orderBy('timestamp', 'desc')
         .limit(5)
-        .onSnapshot({includeMetadataChanges: true}, snapshot => {
-          const lastdata = snapshot.docs[snapshot.docs.length - 1];
-          snapshot.docs.length < 5
-            ? setLastPosition(true)
-            : setLastPosition(false);
-          setStartAfter(lastdata);
-          setisLoading(true);
-          dispatch(
-            Addreel(
-              snapshot.docs.map(doc => ({
-                id: doc.id,
-                reellist: doc.data(),
-              })),
-            ),
-          );
-          setData(
-            snapshot.docs.map(doc => ({
-              id: doc.id,
-              reellist: doc.data(),
-            })),
-          );
-        });
+        .onSnapshot({includeMetadataChanges: true}, snapshot => {});
       return unsubscribe;
     }
   }, [user?.email]);
 
   const loadMoreReels = () => {
     if (user?.email && startAfter) {
-      const unsubscribe = db
-        .collection('user_reels')
-        .doc(user.email)
-        .collection('reellist')
-        .orderBy('timestamp', 'desc')
-        .startAfter(startAfter)
-        .limit(5)
-        .onSnapshot({includeMetadataChanges: true}, snapshot => {
-          if (snapshot && !LastPosition) {
-            snapshot.docs.length < 5
-              ? setLastPosition(true)
-              : setLastPosition(false);
-            const lastdata = snapshot.docs[snapshot.docs.length - 1];
-            setStartAfter(lastdata);
+      fetchReelListMore().then(snapshot => {
+        if (snapshot) {
+          snapshot.docs.length < 5
+            ? setLastPosition(true)
+            : setLastPosition(false);
+          const lastdata = snapshot.docs[snapshot.docs.length - 1];
+          setStartAfter(lastdata);
 
-            dispatch(
-              Addreel([
-                ...reels,
-                ...snapshot.docs.map(doc => ({
-                  id: doc.id,
-                  reellist: doc.data(),
-                })),
-              ]),
-            );
-            setData([
-              ...data,
+          dispatch(
+            Addreel([
+              ...reels,
               ...snapshot.docs.map(doc => ({
                 id: doc.id,
                 reellist: doc.data(),
               })),
-            ]);
-          }
-        });
-      return unsubscribe;
+            ]),
+          );
+          setData([
+            ...data,
+            ...snapshot.docs.map(doc => ({
+              id: doc.id,
+              reellist: doc.data(),
+            })),
+          ]);
+        }
+      });
     }
   };
+  const renderReels = useCallback(({item, index}) => {
+    if (item.reellist?.reelname.toLowerCase().includes(search.toLowerCase())) {
+      return (
+        <Reellist
+          id={item.id}
+          name={item.reellist?.reelname}
+          navigation={navigation}
+          t={new Date(item.reellist?.timestamp?.seconds * 1000).toUTCString()}
+        />
+      );
+    }
+  });
 
   return (
     <KeyboardAvoidingView
@@ -247,47 +283,40 @@ export default function ShotoHome({navigation}) {
       )}
 
       <StatusBar backgroundColor="#1d2533" />
-      {reels ? (
-        <View style={{flex: 1}}>
-          <FlatList
-            showsVerticalScrollIndicator={false}
-            data={reels}
-            initialNumToRender={5}
-            renderItem={({item}) =>
-              item.reellist?.reelname
-                .toLowerCase()
-                .includes(search.toLowerCase()) ? (
-                <Reellist
-                  id={item.id}
-                  name={item.reellist?.reelname}
-                  navigation={navigation}
-                  t={new Date(
-                    item.reellist?.timestamp?.seconds * 1000,
-                  ).toUTCString()}
-                />
-              ) : (
-                <View></View>
-              )
-            }
-            keyExtractor={item => item.id}
-            onEndReached={loadMoreReels}
-            onEndReachedThreshold={5}
-            ListFooterComponent={
-              !LastPosition && <ActivityIndicator color="grey" size="small" />
-            }
-            scrollEventThrottle={150}
-          />
-        </View>
+
+      {isLoading ? (
+        reels?.length === 0 ? (
+          <StartingHomePage />
+        ) : (
+          <View style={{flex: 1}}>
+            <FlatList
+              showsVerticalScrollIndicator={false}
+              data={reels}
+              initialNumToRender={5}
+              onRefresh={onRefresh}
+              refreshing={refreshing}
+              renderItem={renderReels}
+              keyExtractor={item => item.id}
+              onEndReached={loadMoreReels}
+              onEndReachedThreshold={5}
+              ListFooterComponent={
+                !LastPosition && <ActivityIndicator color="grey" size="small" />
+              }
+              scrollEventThrottle={150}
+            />
+          </View>
+        )
       ) : (
         <Loading />
       )}
+
       <Footer navigation={navigation} />
     </KeyboardAvoidingView>
   );
 }
 const Loading = () => {
   return (
-    <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+    <View style={styles.loadingView}>
       <ActivityIndicator size="large" color="grey" />
     </View>
   );
@@ -318,6 +347,11 @@ const styles = StyleSheet.create({
   headerView: {
     display: 'flex',
     flexDirection: 'row',
+    alignItems: 'center',
+  },
+  loadingView: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
   },
 });

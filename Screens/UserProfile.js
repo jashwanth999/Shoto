@@ -12,9 +12,9 @@ import {Ionicons, MaterialCommunityIcons} from '../Styles/Icons';
 import {useSelector, useDispatch} from 'react-redux';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {auth} from '../Security/firebase';
 import {Overlay} from 'react-native-elements';
 import {Addreel, Adduser} from '../actions';
+import auth from '@react-native-firebase/auth';
 function Hello() {
   return (
     <View style={styles.helloContainer}>
@@ -46,14 +46,16 @@ function UserProfile({navigation}) {
   const signOut = async () => {
     await GoogleSignin.signOut();
     await AsyncStorage.removeItem('email');
-    await auth.signOut().then(() => {
-      navigation.navigate('Login');
+    await auth()
+      .signOut()
+      .then(() => {
+        navigation.navigate('Login');
 
-      // clear data
-      toggleOverlay();
-      dispatch(Addreel(null));
-      dispatch(Adduser(null));
-    });
+        // clear data
+        toggleOverlay();
+        dispatch(Addreel(null));
+        dispatch(Adduser(null));
+      });
   };
 
   return (

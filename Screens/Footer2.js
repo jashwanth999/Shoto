@@ -3,65 +3,45 @@ import {StyleSheet, View, TouchableOpacity, Text} from 'react-native';
 import {MaterialCommunityIcons, MaterialIcons} from '../Styles/Icons';
 import ImagePicker from 'react-native-image-crop-picker';
 import {useDispatch, useSelector} from 'react-redux';
-import {clearScrollData, setindex} from '../actions';
+import {setindex} from '../actions';
 import firestore from '@react-native-firebase/firestore';
-function Footer2({navigation, reelname}) {
+function Footer2({navigation}) {
   const db = firestore();
-  var today = new Date();
-  today =
-    parseInt(today.getMonth() + 1) +
-    ' ' +
-    today.getDate() +
-    ' ' +
-    today.getHours() +
-    ':' +
-    today.getMinutes();
-  //const currentUser = auth.currentUser;
-  const dispatch = useDispatch();
   const user = useSelector(state => state.user.user);
   const reeldata = useSelector(state => state.reeldata.reeldata);
+  const dispatch = useDispatch();
   const takePhoto2 = () => {
     ImagePicker.openCamera({
       width: 300,
       height: 400,
     }).then(image => {
-      dispatch(clearScrollData());
       dispatch(setindex(0));
-      db.collection('reels')
-        .doc(reeldata.reelid)
-        .collection('reelimages')
-        .add({
-          uploadedby: user.email,
-          imageurl: image.path,
-          uploaderpropic: user.profilepic,
-          timestamp: new Date(),
-          uploadername: user.username,
-          localimage: image.path,
-        })
-        .then(res => {
-          console.log(res.id);
-          navigation.navigate('ReelView', {
-            image: image.path,
-            imagename: image.path.replace(/^.*[\\\/]/, ''),
-            reelid: res.id,
-          });
-        });
+
+      navigation.navigate('ReelView', {
+        image: image.path,
+        imagename: image.path.replace(/^.*[\\\/]/, ''),
+      });
     });
   };
   return (
     <View style={styles.container}>
       <TouchableOpacity
+        activeOpacity={0.8}
         onPress={() => {
-          navigation.navigate('Adduserlist', {reelname: reelname});
+          navigation.navigate('Adduserlist');
         }}
         style={styles.fotterView}>
         <MaterialIcons name="person-add" color="#d4d4d4" size={24} />
         <Text style={styles.text}>Add People</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={takePhoto2} style={styles.middleIcon}>
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={takePhoto2}
+        style={styles.middleIcon}>
         <MaterialCommunityIcons name="camera-iris" color="#d4d4d4" size={34} />
       </TouchableOpacity>
       <TouchableOpacity
+        activeOpacity={0.8}
         onPress={() => {
           navigation.navigate('Shotohome');
         }}
@@ -113,59 +93,6 @@ const styles = StyleSheet.create({
     minHeight: 40,
     borderWidth: 0.2,
     borderColor: '#d4d4d4',
-  },
-  addreelnamecontainer: {
-    height: 160,
-    width: 270,
-    display: 'flex',
-    flexDirection: 'column',
-    backgroundColor: '#1d2533',
-  },
-  createnewthread: {
-    fontSize: 20,
-    color: '#d4d4d4',
-    marginTop: 10,
-  },
-  whatshouldwenameit: {
-    color: '#d4d4d4',
-    fontSize: 14,
-    marginTop: 10,
-  },
-  textinput: {
-    padding: 2,
-    borderRadius: 5,
-    width: '95%',
-    fontSize: 14,
-    borderBottomColor: 'grey',
-    borderBottomWidth: 1,
-    color: '#d4d4d4',
-  },
-  footer: {
-    display: 'flex',
-    flexDirection: 'row',
-    width: '100%',
-    justifyContent: 'space-around',
-    position: 'absolute',
-    bottom: 0,
-  },
-  footertext: {
-    fontSize: 15,
-    color: '#d4d4d4',
-  },
-  actcontainer: {
-    height: 150,
-    width: 250,
-    display: 'flex',
-    backgroundColor: '#1d2533',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  footerButtonsContainer: {
-    borderColor: 'grey',
-    borderWidth: 1,
-    padding: 3,
-    width: '40%',
-    alignItems: 'center',
   },
 });
 

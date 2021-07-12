@@ -2,10 +2,12 @@ import React, {useEffect, useState} from 'react';
 import {View, StyleSheet, Text, TouchableOpacity} from 'react-native';
 import {MaterialIcons} from '../Styles/Icons.js';
 import {useDispatch, useSelector} from 'react-redux';
-import {Addreeldata, clearScrollData, setindex} from '../actions.js';
+import {Addreeldata, setindex} from '../actions.js';
 import FastImage from 'react-native-fast-image';
 import ImagePicker from 'react-native-image-crop-picker';
 import firestore from '@react-native-firebase/firestore';
+import {createImageProgress} from 'react-native-image-progress';
+import ProgressBar from 'react-native-progress/Bar';
 
 export default function Reellist({navigation, name, id, t}) {
   const db = firestore();
@@ -13,7 +15,6 @@ export default function Reellist({navigation, name, id, t}) {
   const [reelusers, setreelusers] = useState([]);
   const [images, setimages] = useState([]);
   const user = useSelector(state => state.user.user);
-
   useEffect(() => {
     if (user?.email) {
       const unsubscribe = db
@@ -38,7 +39,7 @@ export default function Reellist({navigation, name, id, t}) {
         setimages(
           val.docs.map(doc => ({
             id: doc.id,
-            imagess: doc.data(),
+            reelimages: doc.data(),
           })),
         );
       });
@@ -67,10 +68,8 @@ export default function Reellist({navigation, name, id, t}) {
     navigation.navigate('ReelView', {
       image: '',
       imagename: '',
-      reelid: '',
     });
   };
-
   const ClickaPic = () => {
     ImagePicker.openCamera({
       width: 300,
@@ -80,36 +79,19 @@ export default function Reellist({navigation, name, id, t}) {
         Addreeldata({
           reelname: name,
           reelid: id,
-          imageslength: images.length,
         }),
       );
-      dispatch(clearScrollData());
+      navigation.navigate('ReelView', {
+        image: image.path,
+        imagename: image.path.replace(/^.*[\\\/]/, ''),
+      });
       dispatch(setindex(0));
-      db.collection('reels')
-        .doc(id)
-        .collection('reelimages')
-        .add({
-          uploadedby: user.email,
-          imageurl: image.path,
-          uploaderpropic: user.profilepic,
-          timestamp: new Date(),
-          uploadername: user.username,
-        })
-        .then(res => {
-          navigation.navigate('ReelView', {
-            image: image.path,
-            imagename: image.path.replace(/^.*[\\\/]/, ''),
-            reelid: res.id,
-          });
-        });
     });
   };
+
   return (
     <View style={[styles.container]}>
-
-      <TouchableOpacity
-        activeOpacity={0.8}
-        onPress={setReel}>
+      <TouchableOpacity activeOpacity={0.8} onPress={setReel}>
         {/* The upper part of the card leads to the reel screen */}
         <View style={styles.titleContainer}>
           <Text style={styles.titleText}>{name}</Text>
@@ -121,9 +103,24 @@ export default function Reellist({navigation, name, id, t}) {
         </View>
 
         <View style={styles.thumbnailsContainer}>
-          {images.slice(0, 4).map((image, index) => (
-            <ImageThumbnail key={index} imageUri={image.imagess?.imageurl} />
-          ))}
+          {images.slice(0, 4).map((item, index) => {
+            if (
+              (item.reelimages?.isUploaded === false &&
+                item.reelimages?.uploadedby === user.email) ||
+              item.reelimages?.isUploaded === true
+            ) {
+              return (
+                <ImageThumbnail
+                  key={index}
+                  imageUri={
+                    item.reelimages?.isUploaded
+                      ? item.reelimages?.s3url
+                      : item.reelimages?.localimage
+                  }
+                />
+              );
+            }
+          })}
         </View>
       </TouchableOpacity>
 
@@ -178,9 +175,11 @@ const ContributorsPics = ({reelUsers}) => {
 };
 
 const ImageThumbnail = ({imageUri}) => {
+  const Image = createImageProgress(FastImage);
   return (
     <View style={{flex: 1}}>
-      <FastImage
+      <Image
+        indicator={ProgressBar}
         indicatorProps={{
           size: 40,
           borderWidth: 0,
@@ -204,7 +203,6 @@ const ImageThumbnail = ({imageUri}) => {
 const styles = StyleSheet.create({
   container: {
     marginVertical: 5,
-    // backgroundColor: '#000',
     backgroundColor: 'rgba(18,18,18,1)',
     flexDirection: 'column',
   },
@@ -212,7 +210,6 @@ const styles = StyleSheet.create({
     width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-around',
-    // backgroundColor: 'rgba(18,18,18,1)',
   },
   bottomContainer: {
     flexDirection: 'row',
@@ -242,13 +239,13 @@ const styles = StyleSheet.create({
   titleText: {
     color: 'rgba(212, 212, 212, 0.8)',
     fontSize: 14,
-    fontWeight:  "bold",
+    fontWeight: 'bold',
     marginVertical: 2,
   },
   infoText: {
     color: 'rgba(212, 212, 212, 0.8)',
     fontSize: 12,
-    fontWeight: "normal",
+    fontWeight: 'normal',
   },
   clickaPicButton: {
     flexDirection: 'row',
@@ -258,6 +255,6 @@ const styles = StyleSheet.create({
   clickaPicButtonText: {
     // color: "rgba(212, 212, 212, 0.6)",
     color: 'rgba(36, 123, 160, 0.8)',
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
 });

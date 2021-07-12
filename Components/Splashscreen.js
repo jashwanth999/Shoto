@@ -12,9 +12,8 @@ export default function Spashscreen({navigation}) {
       const value = await AsyncStorage.getItem('email');
 
       if (value) {
-
         // if login already goes to home page
-        
+
         navigation.navigate('Shotohome');
         dispatch(Adduser({email: value}));
       } else {
@@ -30,7 +29,7 @@ export default function Spashscreen({navigation}) {
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor="#1d2533" />
-      <Image source={require('../assets/shoto.png')} style={styles.shotologo} />
+      <Image source={require('../assets/shoto.png')} style={styles.shotoLogo} />
     </View>
   );
 }
@@ -44,7 +43,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignContent: 'center',
   },
-  shotologo: {
+  shotoLogo: {
     height: 160,
     width: 160,
     marginBottom: 16,

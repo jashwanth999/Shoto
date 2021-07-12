@@ -11,20 +11,20 @@ import {
 import Comments from './Comments.js';
 import {Ionicons} from '../Styles/Icons.js';
 import {useSelector, useDispatch} from 'react-redux';
-import firestore from '@react-native-firebase/firestore'
+import firestore from '@react-native-firebase/firestore';
 import {AddComments} from '../actions.js';
 import FastImage from 'react-native-fast-image';
 export default function ImageView({navigation, route}) {
   const user = useSelector(state => state.user.user);
   const {imageurl, reelid, uploaderid, uploadername, imageid, t} = route.params;
-  const commentslist = useSelector(state => state.Comments.comments);
-  const db=firestore()
+  const commentsList = useSelector(state => state.Comments.comments);
+  const db = firestore();
   const [comment, setComment] = useState('');
   const dispatch = useDispatch();
+  const [isLoading, setIsLoading] = useState(false);
+
   const submitcomment = () => {
-
     // sending comments to images which stored in reels -> reelimages
-
     try {
       db.collection('reels')
         .doc(reelid)
@@ -39,21 +39,17 @@ export default function ImageView({navigation, route}) {
           imageuploaderid: uploaderid,
           imageuploadername: uploadername,
           timestamp: new Date(),
-        })
-        .then(() => {
-          
-          //updating comments length at the same time
-
-          db.collection('reels')
-            .doc(reelid)
-            .collection('reelimages')
-            .doc(imageid)
-            .update({
-              noofcomments: commentslist.length + 1,
-            });
+        });
+      //updating comments length at the same time
+      db.collection('reels')
+        .doc(reelid)
+        .collection('reelimages')
+        .doc(imageid)
+        .update({
+          noofcomments: commentsList.length + 1,
         });
     } catch (error) {
-      alert('something went wrong check your internet connection');
+      alert('something went wrong');
     }
     setComment('');
   };
@@ -69,6 +65,7 @@ export default function ImageView({navigation, route}) {
       .collection('comments')
       .orderBy('timestamp', 'desc')
       .onSnapshot(snapshot => {
+        setIsLoading(true);
         dispatch(
           AddComments(
             snapshot.docs.map(doc => ({
@@ -81,7 +78,7 @@ export default function ImageView({navigation, route}) {
     return unsubscribe;
   }, [reelid, imageid]);
   return (
-    <View style={{flex: 1, backgroundColor: 'black'}}>
+    <View style={styles.container}>
       <ScrollView>
         <TouchableOpacity
           activeOpacity={1}
@@ -92,34 +89,18 @@ export default function ImageView({navigation, route}) {
           }>
           <FastImage style={styles.backgroundImage} source={{uri: imageurl}} />
         </TouchableOpacity>
-
-        <View style={{width: '100%', alignItems: 'center', marginTop: 15}}>
-          <View
-            style={{
-              width: 140,
-              height: 5,
-              backgroundColor: 'grey',
-              borderRadius: 40,
-            }}></View>
-        </View>
-        <View style={styles.titleview}>
-          <Text style={{color: '#D7DBDD', fontSize: 16}}>{uploadername}</Text>
-          <Text style={{color: '#D7DBDD', fontSize: 16}}>
-            {' '}
-            {t.split(' ')[1]} {t.split(' ')[2]} {t.split(' ')[3]}{' '}
-            {t.split(' ')[4]}
-          </Text>
-        </View>
+        <Divider />
+        <TitleView uploadername={uploadername} t={t} />
         <TextInput
           value={comment}
           onChangeText={text => setComment(text)}
           placeholder="write something about pic"
           placeholderTextColor="grey"
           onSubmitEditing={!comment ? () => {} : submitcomment}
-          style={styles.textinput}
+          style={styles.textInput}
         />
-        {commentslist !== null ? (
-          commentslist.map(({id, comments}) => (
+        {isLoading ? (
+          commentsList.map(({id, comments}) => (
             <Comments
               key={id}
               url={comments.commentbyprofilepic}
@@ -128,33 +109,60 @@ export default function ImageView({navigation, route}) {
             />
           ))
         ) : (
-          <ActivityIndicator
-            size="small"
-            color="white"
-            style={{marginTop: 10}}
-          />
+          <LoadingView />
         )}
       </ScrollView>
-      <View style={styles.backbuttoniconview}>
-        <Ionicons
-          onPress={() => {
-            dispatch(AddComments(null));
-            navigation.goBack();
-          }}
-          name="md-chevron-back-circle-outline"
-          color="white"
-          style={{marginLeft: 3}}
-          size={35}
-        />
-      </View>
+      <BackButton navigation={navigation} />
     </View>
   );
 }
+const TitleView = ({uploadername, t}) => {
+  return (
+    <View style={styles.titleView}>
+      <Text style={styles.uploaderNameText}>{uploadername}</Text>
+      <Text style={styles.date}>
+        {' '}
+        {t.split(' ')[1]} {t.split(' ')[2]} {t.split(' ')[3]} {t.split(' ')[4]}
+      </Text>
+    </View>
+  );
+};
+const BackButton = ({navigation}) => {
+  return (
+    <View style={styles.backButtonView}>
+      <Ionicons
+        onPress={() => {
+          navigation.goBack();
+        }}
+        name="md-chevron-back-circle-outline"
+        color="white"
+        style={{marginLeft: 3}}
+        size={35}
+      />
+    </View>
+  );
+};
+const Divider = () => {
+  return (
+    <View style={styles.dividerView}>
+      <View style={styles.divider}></View>
+    </View>
+  );
+};
+const LoadingView = () => {
+  return (
+    <ActivityIndicator size="small" color="white" style={{marginTop: 10}} />
+  );
+};
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: 'black',
+  },
   backgroundImage: {
     height: 380,
   },
-  backbuttoniconview: {
+  backButtonView: {
     position: 'absolute',
     top: 30,
     left: 20,
@@ -166,12 +174,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignContent: 'center',
   },
-  titleview: {
+  titleView: {
     display: 'flex',
     flexDirection: 'column',
     margin: 10,
   },
-  textinput: {
+  textInput: {
     backgroundColor: 'black',
     padding: 5,
     borderBottomWidth: 1.5,
@@ -179,5 +187,24 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     marginRight: 10,
     color: 'white',
+  },
+  uploaderNameText: {
+    color: '#D7DBDD',
+    fontSize: 16,
+  },
+  date: {
+    color: '#D7DBDD',
+    fontSize: 13,
+  },
+  dividerView: {
+    width: '100%',
+    alignItems: 'center',
+    marginTop: 15,
+  },
+  divider: {
+    width: 140,
+    height: 5,
+    backgroundColor: 'grey',
+    borderRadius: 40,
   },
 });

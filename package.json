@@ -21,9 +21,6 @@
     "@react-navigation/native": "^5.9.4",
     "@react-navigation/stack": "^5.14.5",
     "@sentry/react-native": "^2.6.0",
-    "expo-firestore-offline-persistence": "^0.1.0",
-    "expo-sqlite": "^9.2.1",
-    "indexeddbshim": "^8.0.0",
     "react": "17.0.1",
     "react-native": "0.64.2",
     "react-native-aws3": "^0.0.9",
@@ -38,8 +35,7 @@
     "react-native-screens": "^3.4.0",
     "react-native-unimodules": "^0.13.3",
     "react-native-vector-icons": "^8.1.0",
-    "react-redux": "^7.2.4",
-    "redux-persist": "^6.0.0"
+    "react-redux": "^7.2.4"
   },
   "devDependencies": {
     "@babel/core": "^7.12.9",

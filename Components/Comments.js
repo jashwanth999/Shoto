@@ -1,14 +1,14 @@
-import React from "react";
-import { View } from "react-native";
-import { ListItem, Avatar } from "react-native-elements";
-export default function Comments({ url, name, comment }) {
+import React from 'react';
+import {View, StyleSheet} from 'react-native';
+import {ListItem, Avatar} from 'react-native-elements';
+export default function Comments({url, name, comment}) {
   return (
     <View>
-      <ListItem containerStyle={{ backgroundColor: "black" }} bottomDivider>
-        <Avatar rounded source={{ uri: url }} />
+      <ListItem containerStyle={styles.container} bottomDivider>
+        <Avatar rounded source={{uri: url}} />
         <ListItem.Content>
-          <ListItem.Title style={{ color: "#D7DBDD" }}>{name}</ListItem.Title>
-          <ListItem.Subtitle style={{ color: "#D7DBDD" }}>
+          <ListItem.Title style={styles.title}>{name}</ListItem.Title>
+          <ListItem.Subtitle style={styles.subTitle}>
             {comment}
           </ListItem.Subtitle>
         </ListItem.Content>
@@ -16,3 +16,14 @@ export default function Comments({ url, name, comment }) {
     </View>
   );
 }
+const styles = StyleSheet.create({
+  title: {
+    color: '#D7DBDD',
+  },
+  subTitle: {
+    color: '#D7DBDD',
+  },
+  container: {
+    backgroundColor: 'black',
+  },
+});
