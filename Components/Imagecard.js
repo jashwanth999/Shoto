@@ -90,11 +90,7 @@ export default function imagecard({
     <View style={[styles.container, containerStyle]}>
       <TouchableOpacity activeOpacity={0.8} onPress={goToImageView}>
         <Image
-<<<<<<< HEAD
           indicator={ProgressBar}
-=======
-          // indicator={ProgressBar} 
->>>>>>> master
           indicatorProps={{
             size: 40,
             borderWidth: 0,
