@@ -41,48 +41,46 @@ function Footer({navigation}) {
 
     if (!reelnames.includes(reelname.toLowerCase())) {
       try {
-        navigation.navigate('Adduserlist', {reelname: reelname});
+        navigation.navigate('Adduserlist');
         toggleOverlay();
-
-        db.collection('user_reels')
+        const data = {
+          reelname: reelname,
+          timestamp: new Date(),
+        };
+        let uploadNewReel = db
+          .collection('user_reels')
           .doc(user.email)
           .collection('reellist')
-          .add({
+          .doc();
+        uploadNewReel.set(data);
+        let reelid = uploadNewReel.id;
+        dispatch(
+          Addreeldata({
+            useremail: user.email,
             reelname: reelname,
+            reelid: reelid,
+            username: user.username,
+          }),
+        );
+        db.collection('reels').doc(reelid).set({
+          created_useremail: user.email,
+          reelname: reelname,
+          created_at: new Date(),
+        });
+        db.collection('reels')
+          .doc(reelid)
+          .collection('reelusers')
+          .doc(user.email)
+          .set({
+            useremail: user.email,
+            reelid: reelid,
             timestamp: new Date(),
-          })
-          .then(res => {
-            setact(false);
-
-            dispatch(
-              Addreeldata({
-                useremail: user.email,
-                reelname: reelname,
-                reelid: res.id,
-                username: user.username,
-              }),
-            );
-
-            db.collection('reels').doc(res.id).set({
-              created_useremail: user.email,
-              reelname: reelname,
-              created_at: new Date(),
-            });
-            db.collection('reels')
-              .doc(res.id)
-              .collection('reelusers')
-              .doc(user.email)
-              .set({
-                useremail: user.email,
-                reelid: res.id,
-                timestamp: new Date(),
-                profilepic: user.profilepic,
-              });
-
-            dispatch(setChange(!changed));
+            profilepic: user.profilepic,
           });
+        dispatch(setChange(!changed));
       } catch (error) {
         toggleOverlay();
+        console.log(error.message);
       }
     } else {
       // if reelname already exist it alerts
@@ -112,15 +110,22 @@ function Footer({navigation}) {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={toggleOverlay} style={styles.fotterView}>
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={toggleOverlay}
+        style={styles.fotterView}>
         <MaterialCommunityIcons name="movie-roll" color="#d4d4d4" size={24} />
         <Text style={styles.text}>New reel</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={takePhoto} style={styles.middleIcon}>
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={takePhoto}
+        style={styles.middleIcon}>
         <MaterialCommunityIcons name="camera-iris" color="#d4d4d4" size={34} />
       </TouchableOpacity>
       <TouchableOpacity
+        activeOpacity={0.8}
         onPress={() => navigation.navigate('userprofile')}
         style={styles.fotterView}>
         <Ionicons name="ios-person-circle" color="#d4d4d4" size={24} />

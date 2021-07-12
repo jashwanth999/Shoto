@@ -1,27 +1,18 @@
 import React, {useEffect, useState} from 'react';
-import {
-  View,
-  StyleSheet,
-  Text,
-  Image,
-  TouchableOpacity,
-  ActivityIndicator,
-} from 'react-native';
+import {View, StyleSheet, Text, Image, TouchableOpacity} from 'react-native';
 
 import {MaterialIcons} from '../Styles/Icons.js';
 import {useDispatch} from 'react-redux';
-import {Addreeldata, clearScrollData, setindex} from '../actions.js';
+import {Addreeldata, setindex} from '../actions.js';
 import {useSelector} from 'react-redux';
 import firestore from '@react-native-firebase/firestore';
-import auth from '@react-native-firebase/auth';
 
 export default function Reellist({navigation, name, id, t, image, imagename}) {
   const db = firestore();
   const user = useSelector(state => state.user.user);
   const dispatch = useDispatch();
-  const [reelusers, setreelusers] = useState([]);
+  const [reelUsers, setreelusers] = useState([]);
   const [images, setimages] = useState([]);
-  const [act, setAct] = useState(true);
 
   useEffect(() => {
     const unsubscribe = db
@@ -52,106 +43,93 @@ export default function Reellist({navigation, name, id, t, image, imagename}) {
   }, [id]);
 
   const upload = () => {
-    db.collection('reels')
-      .doc(id)
-      .collection('reelimages')
-      .add({
-        uploadedby: user.email,
-        imageurl: image,
-        uploaderpropic: user.profilepic,
-        timestamp: new Date(),
-        uploadername: user.username,
-        profilepic: user.profilepic,
-      })
-      .then(res => {
-        dispatch(clearScrollData());
-        dispatch(setindex(0));
-        navigation.navigate('ReelView', {
-          image: image,
-          imagename: imagename,
-          reelid: res.id,
-        });
-        dispatch(
-          Addreeldata({
-            reelname: name,
-            reelid: id,
-            imageslength: images.length,
-          }),
-        );
-      });
+    dispatch(setindex(0));
+    navigation.navigate('ReelView', {
+      image: image,
+      imagename: imagename,
+    });
+    dispatch(
+      Addreeldata({
+        reelname: name,
+        reelid: id,
+        imageslength: images.length,
+      }),
+    );
   };
 
   return (
-    <TouchableOpacity activeOpacity={0.9} style={styles.reelcontainer}>
+    <TouchableOpacity activeOpacity={0.9} style={styles.reelContainer}>
       <View style={styles.top}>
-        <Text style={{color: '#d4d4d4', fontSize: 15, fontWeight: 'bold'}}>
-          {name}
-        </Text>
+        <Text style={styles.reelCardName}>{name}</Text>
         <View style={{flexDirection: 'row'}}>
-          <Text style={{color: '#d4d4d4', fontSize: 12}}>
+          <Text style={styles.imageLengthText}>
             {t.split(' ')[0]} {t.split(' ')[1]} {t.split(' ')[2]}-
           </Text>
-          <Text style={{color: '#d4d4d4', fontSize: 12}}>
-            {images.length} photos
-          </Text>
+          <Text style={styles.imageLengthText}>{images.length} photos</Text>
         </View>
       </View>
       <View style={styles.bottom}>
-        <View style={styles.contributorsView}>
-          {reelusers.map((users, index) => {
-            if (index < 3) {
-              return (
-                <Image
-                  key={index}
-                  source={{uri: users.profilepic}}
-                  style={styles.contributorsavatar}
-                />
-              );
-            }
-          })}
-          {reelusers.length > 3 ? (
-            <View
-              style={{
-                display: 'flex',
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginLeft: 3,
-              }}>
-              <MaterialIcons name="add" color="white" size={13} />
-              <Text style={{color: 'white', marginRight: 10}}>
-                {reelusers.length - 3}
-              </Text>
-            </View>
-          ) : (
-            <View></View>
-          )}
-        </View>
-
-        {!act ? (
-          <View style={{marginRight: 20}}>
-            <ActivityIndicator color="#d4d4d4" />
-          </View>
-        ) : (
-          <TouchableOpacity
-            onPress={act ? upload : () => {}}
-            style={styles.clickapic}>
-            <Text style={{color: '#d4d4d4'}}>Save</Text>
-            <MaterialIcons name="chevron-right" color="#d4d4d4" size={20} />
-          </TouchableOpacity>
-        )}
+        <ContributorsView reelUsers={reelUsers} />
+        <TouchableOpacity onPress={upload} style={styles.save}>
+          <Text style={styles.saveButtonText}>Save</Text>
+          <MaterialIcons
+            name="chevron-right"
+            color="rgba(36, 123, 160, 0.8)"
+            size={20}
+            style={styles.saveIcon}
+          />
+        </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
 }
+const ContributorsView = ({reelUsers}) => {
+  return (
+    <View style={styles.contributorsView}>
+      {reelUsers.map((users, index) => {
+        if (index < 3) {
+          return (
+            <Image
+              key={index}
+              source={{uri: users.profilepic}}
+              style={styles.contributorsAvatar}
+            />
+          );
+        }
+      })}
+      {reelUsers.length > 3 ? (
+        <View
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginLeft: 3,
+          }}>
+          <MaterialIcons name="add" color="white" size={13} />
+          <Text style={{color: 'white', marginRight: 10}}>
+            {reelUsers.length - 3}
+          </Text>
+        </View>
+      ) : (
+        <View></View>
+      )}
+    </View>
+  );
+};
 const styles = StyleSheet.create({
-  reelcontainer: {
+  reelContainer: {
     height: 110,
     marginTop: 8,
     backgroundColor: 'rgba(14,14,14,1)',
     flexDirection: 'column',
   },
+  reelCardName: {
+    color: '#d4d4d4',
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
 
-  contributorsavatar: {
+  contributorsAvatar: {
     height: 20,
     width: 20,
     borderRadius: 20,
@@ -174,9 +152,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  clickapic: {
+  save: {
     flexDirection: 'row',
     alignItems: 'center',
     margin: 15,
+  },
+  saveButtonText: {
+    color: 'rgba(36, 123, 160, 0.8)',
+    fontWeight: 'bold',
+  },
+  saveIcon: {
+    marginTop: 2,
+  },
+  imageLengthText: {
+    color: '#d4d4d4',
+    fontSize: 12,
   },
 });

@@ -8,28 +8,38 @@ import {
   ActivityIndicator,
   FlatList,
   BackHandler,
+  Dimensions,
 } from 'react-native';
 import {Header} from 'react-native-elements';
 import {Ionicons} from '../Styles/Icons.js';
 import Imagecard from './Imagecard.js';
 import Thumbnail from './Thumbnail.js';
 import {useSelector, useDispatch} from 'react-redux';
-import {Addreelimages, clearScrollData, setindex} from '../actions.js';
+import {Addreelimages, setindex} from '../actions.js';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
-// import * as FileSystem from 'expo-file-system';
 import Footer2 from '../Screens/Footer2.js';
 import {useFocusEffect} from '@react-navigation/native';
 import {RNS3} from 'react-native-aws3';
+
 export default function ReelView({navigation, route}) {
+  const width = Dimensions.get('window').width;
+
   const db = firestore();
-  const {image, imagename, reelid} = route.params;
+  const {image, imagename} = route.params;
+
+  const user = useSelector(state => state.user.user);
+
+  // get images of reels stored in reducers
+
+  const reelimages = useSelector(state => state.reellistimages.reellistimages);
   const [flatRef, setFlatRef] = useState();
   const dispatch = useDispatch();
   const [lastPosition, setLastPosition] = useState(false);
+
   const [startAfter, setstartAfter] = useState(null);
   const [data, setData] = useState([]);
-
+  const [isLoading, setIsLoading] = useState(false);
   // get details of reels stored in reducers
 
   const reeldata = useSelector(state => state.reeldata.reeldata);
@@ -49,30 +59,68 @@ export default function ReelView({navigation, route}) {
     secretKey: 'gF9TIoI6tR46vBykkjkPtqELuqG28qS0+xBp70kN',
     successActionStatus: 201,
   };
-
-  const uploadImage = () => {
+  const uploadImage = imageid => {
     try {
       RNS3.put(file, options).then(response => {
         if (response.status !== 201) {
           alert('Some error occurred');
         } else {
-          db.collection('reels')
-            .doc(reeldata.reelid)
-            .collection('reelimages')
-            .doc(reelid)
-            .update({
-              imageurl: response.body.postResponse.location,
-            });
+          try {
+            db.collection('reels')
+              .doc(reeldata.reelid)
+              .collection('reelimages')
+              .doc(imageid)
+              .update({
+                s3url: response.body.postResponse.location,
+                isUploaded: true,
+              });
+          } catch (error) {
+            db.collection('reels')
+              .doc(reeldata.reelid)
+              .collection('reelimages')
+              .doc(imageid)
+              .update({
+                s3url: '',
+                isUploaded: false,
+              });
+          }
         }
       });
-    } catch (err) {}
+    } catch (err) {
+      db.collection('reels')
+        .doc(reeldata.reelid)
+        .collection('reelimages')
+        .doc(imageid)
+        .update({
+          s3url: '',
+          isUploaded: false,
+        });
+    }
   };
+  const uploadLocalImage = () => {
+    const data = {
+      uploadedby: user.email,
+      uploaderpropic: user.profilepic,
+      timestamp: new Date(),
+      uploadername: user.username,
+      isUploaded: false,
+      localimage: image,
+    };
+    let newImageCollection = db
+      .collection('reels')
+      .doc(reeldata.reelid)
+      .collection('reelimages');
+
+    newImageCollection.add(data).then(res => {
+      uploadImage(res.id);
+    });
+  };
+
   useEffect(() => {
     if (image) {
-      uploadImage();
+      uploadLocalImage();
     }
   }, [image]);
-
   useFocusEffect(
     React.useCallback(() => {
       const onBackPress = () => {
@@ -88,10 +136,6 @@ export default function ReelView({navigation, route}) {
   // get index  of image card stored in reducers when thumbnail clicked
 
   const yof = useSelector(state => state.y.y);
-
-  // get images of reels stored in reducers
-
-  const reelimages = useSelector(state => state.reellistimages.reellistimages);
 
   // get reelimages  from firestore
 
@@ -112,14 +156,20 @@ export default function ReelView({navigation, route}) {
         } else {
           setstartAfter(null);
         }
+        setIsLoading(true);
         dispatch(
           Addreelimages(
             snapshot.docs.map(doc => ({
               id: doc.id,
               reelimages: doc.data(),
-              // localimage: FileSystem.documentDirectory + doc.id + '.jpg',
             })),
           ),
+        );
+        setData(
+          snapshot.docs.map(doc => ({
+            id: doc.id,
+            reelimages: doc.data(),
+          })),
         );
       });
 
@@ -128,7 +178,11 @@ export default function ReelView({navigation, route}) {
 
   const getItemLayout = (data, index) => {
     if (index === -1) return {index, length: 0, offset: 0};
-    return {length: 330, offset: 330 * index, index};
+    return {
+      length: width * 0.86 * (2 / 3) + 20,
+      offset: (width * 0.86 * (2 / 3) + 20) * index,
+      index,
+    };
   };
 
   // scroll to image card ref
@@ -139,36 +193,53 @@ export default function ReelView({navigation, route}) {
   useEffect(() => {
     indexscroll();
   }, [yof]);
+
   const renderImage = useCallback(({item, index}) => {
-    return (
-      <Imagecard
-        index={index}
-        url={item.reelimages?.imageurl}
-        comments={
-          item.reelimages?.noofcomments ? item.reelimages.noofcomments : 0
-        }
-        imageid={item.id}
-        uploaderid={item.reelimages?.uploadedby}
-        reelid={reeldata.reelid}
-        navigation={navigation}
-        t={new Date(item.reelimages?.timestamp.seconds * 1000).toUTCString()}
-        uploadername={item.reelimages?.uploadername}
-        useremail={reeldata.useremail}
-        profilepic={item.reelimages?.uploaderpropic}
-        time={item.reelimages?.time}
-        image={image}
-        localimage={item.reelimages?.localimage}
-      />
-    );
+    if (
+      (item.reelimages?.isUploaded === false &&
+        item.reelimages?.uploadedby === user.email) ||
+      item.reelimages?.isUploaded === true
+    ) {
+      return (
+        <Imagecard
+          index={index}
+          comments={
+            item.reelimages?.noofcomments ? item.reelimages.noofcomments : 0
+          }
+          imageid={item.id}
+          uploaderid={item.reelimages?.uploadedby}
+          reelid={reeldata.reelid}
+          navigation={navigation}
+          t={new Date(item.reelimages?.timestamp.seconds * 1000).toUTCString()}
+          uploadername={item.reelimages?.uploadername}
+          useremail={reeldata.useremail}
+          profilepic={item.reelimages?.uploaderpropic}
+          time={item.reelimages?.time}
+          localimage={item.reelimages?.localimage}
+          s3url={item.reelimages?.s3url}
+          isUploaded={item.reelimages?.isUploaded}
+          file={file}
+          options={options}
+          db={db}
+        />
+      );
+    }
   }, []);
   const renderThumbnail = useCallback(({item, index}) => {
-    return (
-      <Thumbnail
-        url={item.reelimages?.imageurl}
-        index={index}
-        localimage={item.localimage}
-      />
-    );
+    if (
+      (item.reelimages?.isUploaded === false &&
+        item.reelimages?.uploadedby === user.email) ||
+      item.reelimages?.isUploaded === true
+    ) {
+      return (
+        <Thumbnail
+          index={index}
+          localimage={item.reelimages?.localimage}
+          s3url={item.reelimages?.s3url}
+          isUploaded={item.reelimages?.isUploaded}
+        />
+      );
+    }
   }, []);
   const renderFooter = () => {
     return spinner && !lastPosition ? <ActivityIndicator /> : null;
@@ -200,7 +271,6 @@ export default function ReelView({navigation, route}) {
                 ...snapshot.docs.map(doc => ({
                   id: doc.id,
                   reelimages: doc.data(),
-                  // localimage: FileSystem.documentDirectory + doc.id + '.jpg',
                 })),
               ]),
             );
@@ -209,7 +279,6 @@ export default function ReelView({navigation, route}) {
               ...snapshot.docs.map(doc => ({
                 id: doc.id,
                 reelimages: doc.data(),
-                // localimage: FileSystem.documentDirectory + doc.id + '.jpg',
               })),
             ]);
           }
@@ -219,43 +288,37 @@ export default function ReelView({navigation, route}) {
   };
 
   return (
-    <View style={{flex: 1, backgroundColor: 'rgba(14,14,14,1)'}}>
+    <View style={styles.container}>
       <Header
-        containerStyle={{
-          backgroundColor: '#1d2533',
-          borderBottomColor: 'none',
-          height: 90,
-        }}
+        containerStyle={styles.header}
         leftComponent={
           <TouchableOpacity
             onPress={() => {
               navigation.navigate('Shotohome');
-              dispatch(clearScrollData());
               dispatch(setindex(0));
-              dispatch(Addreelimages(null));
             }}
-            style={{display: 'flex', flexDirection: 'row', marginTop: 4}}>
+            style={styles.leftHeader}>
             <Ionicons name="chevron-back" color="#d4d4d4" size={21} />
-            <Text style={{color: '#d4d4d4', fontSize: 15}}>Home</Text>
+            <Text style={styles.homeText}>Home</Text>
           </TouchableOpacity>
         }
         centerComponent={
-          <View style={styles.headernamecontainer}>
+          <View style={styles.headerNameContainer}>
             <Text
               numberOfLines={1}
               ellipsizeMode="tail"
-              style={{color: '#d4d4d4', fontSize: 16}}>
+              style={styles.reelnameText}>
               {reeldata.reelname}
             </Text>
           </View>
         }
       />
       <StatusBar backgroundColor="#1d2533" />
-      {reelimages === null ? (
+      {!isLoading ? (
         <LoadingView />
       ) : (
-        <View style={{display: 'flex', flexDirection: 'row', flex: 1}}>
-          <View style={styles.imagesview}>
+        <View style={styles.reelViewContainer}>
+          <View style={styles.imagesView}>
             <FlatList
               initialNumToRender={10}
               windowSize={5}
@@ -274,12 +337,9 @@ export default function ReelView({navigation, route}) {
               }}
               onEndReachedThreshold={0}
               ListFooterComponent={renderFooter}
-              onMomentumScrollBegin={() => {
-                onEndReacheMomentum = false;
-              }}
             />
           </View>
-          <View style={styles.thumbnailview}>
+          <View style={styles.thumbnailView}>
             <FlatList
               initialNumToRender={10}
               windowSize={5}
@@ -303,36 +363,60 @@ export default function ReelView({navigation, route}) {
 }
 const LoadingView = () => {
   return (
-    <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+    <View style={styles.loadingView}>
       <ActivityIndicator size="large" color="grey" />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  headernamecontainer: {
+  container: {
+    flex: 1,
+    backgroundColor: 'rgba(14,14,14,1)',
+  },
+  header: {
+    backgroundColor: '#1d2533',
+    borderBottomColor: '#1d2533',
+    height: 90,
+  },
+  headerNameContainer: {
     display: 'flex',
     flexDirection: 'column',
     marginBottom: 4,
     marginTop: 4,
   },
-  imagesview: {
+  imagesView: {
     width: '86%',
     backgroundColor: 'black',
     marginTop: 2,
   },
-  thumbnailview: {
+  thumbnailView: {
     width: '100%',
     backgroundColor: 'black',
     marginTop: 12,
     height: '100%',
   },
-  addnewreelbutton: {
-    width: '100%',
+  reelViewContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    flex: 1,
+  },
+  reelnameText: {
+    color: '#d4d4d4',
+    fontSize: 16,
+  },
+  leftHeader: {
+    display: 'flex',
+    flexDirection: 'row',
+    marginTop: 4,
+  },
+  homeText: {
+    color: '#d4d4d4',
+    fontSize: 15,
+  },
+  loadingView: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    position: 'absolute',
-    bottom: 0,
-    zIndex: 1,
   },
 });

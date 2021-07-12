@@ -87,11 +87,7 @@ export const updateComments = commentData => {
     payload: commentData,
   };
 };
-export const clearScrollData = () => {
-  return {
-    type: 'CLEAR_CORD',
-  };
-};
+
 export const reelNameAction = reelnames => {
   return {
     type: 'REEL_NAMES',
@@ -110,21 +106,6 @@ export const setChange = change => {
     payload: change,
   };
 };
-export const setSearchHeader = value => {
-  return {
-    type: 'SET_SEARCH_HEADER',
-    payload: value,
-  };
-};
-export const updateReelImages = images => {
-  return {
-    type: 'UPDATE_REEL_IMAGES',
-    payload: images,
-  };
-};
-export const updateLocalImages = localimagedata => {
-  return {
-    type: 'UPDATE_LOCAL_IMAGES',
-    payload: localimagedata,
-  };
-};
+
+
+

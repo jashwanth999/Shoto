@@ -6,7 +6,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  ActivityIndicator,
   ScrollView,
 } from 'react-native';
 import {Header} from 'react-native-elements';
@@ -16,12 +15,10 @@ import {useSelector, useDispatch} from 'react-redux';
 import {reeluseremail} from '../../actions';
 import firestore from '@react-native-firebase/firestore';
 
-export default function Adduserslist({navigation, route}) {
-  const {reelname} = route.params;
+export default function Adduserslist({navigation}) {
   const db = firestore();
-  const [profilepic, setprofilepic] = useState(null);
-  const [inputemail, setinputemail] = useState('');
-  const [act, setact] = useState(true);
+  const [profilepic, setProfilePic] = useState(null);
+  const [inputEmail, setInputEmail] = useState('');
 
   const [admin, setAdmin] = useState('');
 
@@ -70,50 +67,45 @@ export default function Adduserslist({navigation, route}) {
   // get user profie pics
 
   useEffect(() => {
-    if (inputemail) {
+    if (inputEmail) {
       const unsubscribe = db
         .collection('users')
-        .doc(inputemail.toLowerCase())
+        .doc(inputEmail.toLowerCase())
         .onSnapshot(doc => {
-          setprofilepic(doc.data()?.profilepic);
+          setProfilePic(doc.data()?.profilepic);
         });
       return unsubscribe;
     }
-  }, [inputemail]);
-  const add = async () => {
+  }, [inputEmail]);
+  const add = () => {
     // adding users to reels
 
-    if (inputemail && validateEmail(inputemail.toLowerCase())) {
+    if (inputEmail && validateEmail(inputEmail.toLowerCase())) {
       try {
-        setact(false);
-        await db
-          .collection('reels')
+        setInputEmail('');
+        db.collection('reels')
           .doc(reeldata.reelid)
           .collection('reelusers')
-          .doc(inputemail.toLowerCase())
+          .doc(inputEmail.toLowerCase())
           .set({
-            useremail: inputemail.toLowerCase(),
+            useremail: inputEmail.toLowerCase(),
             profilepic: profilepic
               ? profilepic
-              : 'https://res.cloudinary.com/jashwanth/image/upload/v1624182501/60111_nihqdw.jpg',
+              : 'https://image.freepik.com/free-vector/businessman-character-avatar-isolated_24877-60111.jpg',
             timestamp: new Date(),
             reelid: reeldata.reelid,
-          })
-          .then(async () => {
-            setact(true);
-            db.collection('user_reels')
-              .doc(inputemail.toLowerCase())
-              .collection('reellist')
-              .doc(reeldata.reelid)
-              .set({
-                reelname: reeldata.reelname,
-                timestamp: new Date(),
-              });
           });
-        setinputemail('');
+
+        db.collection('user_reels')
+          .doc(inputEmail.toLowerCase())
+          .collection('reellist')
+          .doc(reeldata.reelid)
+          .set({
+            reelname: reeldata.reelname,
+            timestamp: new Date(),
+          });
       } catch (error) {
         alert('some error as occured');
-        setact(true);
       }
     } else {
       alert("It's not a valid email");
@@ -122,52 +114,15 @@ export default function Adduserslist({navigation, route}) {
 
   return (
     <View style={styles.container}>
-      <Header
-        containerStyle={{
-          backgroundColor: '#1d2533',
-          borderBottomColor: 'none',
-          height: 90,
-        }}
-        leftComponent={
-          <TouchableOpacity
-            onPress={() => {
-              navigation.navigate('ReelView');
-            }}>
-            <Ionicons name="chevron-back" color="#d4d4d4" size={24} />
-          </TouchableOpacity>
-        }
-        centerComponent={
-          <View style={{}}>
-            <Text
-              numberOfLines={1}
-              ellipsizeMode="tail"
-              style={{color: 'white', fontSize: 16, fontWeight: 'bold'}}>
-              {reelname}
-            </Text>
-          </View>
-        }
-        rightComponent={
-          <TouchableOpacity
-            onPress={() => {
-              navigation.navigate('Shotohome');
-            }}>
-            <MaterialCommunityIcons
-              name="checkbox-marked-circle-outline"
-              color="white"
-              size={26}
-            />
-          </TouchableOpacity>
-        }
-      />
+      <HeaderComponent reelname={reeldata.reelname} navigation={navigation} />
       <StatusBar backgroundColor="#1d2533" />
-
-      <View style={styles.inputview}>
-        <Text style={{color: 'white', fontWeight: 'bold', marginLeft: 10}}>
+      <View style={styles.inputView}>
+        <Text style={styles.typeEmailText}>
           Type email id of the people you want to add
         </Text>
         <TextInput
-          value={inputemail}
-          onChangeText={text => setinputemail(text)}
+          value={inputEmail}
+          onChangeText={text => setInputEmail(text)}
           placeholder="abc@example.com"
           placeholderTextColor="grey"
           style={styles.textinput}
@@ -178,14 +133,7 @@ export default function Adduserslist({navigation, route}) {
           activeOpacity={0.7}
           onPress={add}
           style={styles.addButton}>
-          {act ? (
-            <Text style={{color: 'white', fontSize: 16, fontWeight: 'bold'}}>
-              {' '}
-              ADD
-            </Text>
-          ) : (
-            <ActivityIndicator color="white" />
-          )}
+          <Text style={styles.addText}> ADD</Text>
         </TouchableOpacity>
       </View>
       <ScrollView contentContainerStyle={{marginTop: 15, marginLeft: 10}}>
@@ -196,10 +144,50 @@ export default function Adduserslist({navigation, route}) {
     </View>
   );
 }
+const HeaderComponent = ({navigation, reelname}) => {
+  return (
+    <Header
+      containerStyle={styles.header}
+      leftComponent={
+        <TouchableOpacity
+          onPress={() => {
+            navigation.navigate('ReelView');
+          }}>
+          <Ionicons name="chevron-back" color="#d4d4d4" size={24} />
+        </TouchableOpacity>
+      }
+      centerComponent={
+        <Text
+          numberOfLines={1}
+          ellipsizeMode="tail"
+          style={{color: 'white', fontSize: 16, fontWeight: 'bold'}}>
+          {reelname}
+        </Text>
+      }
+      rightComponent={
+        <TouchableOpacity
+          onPress={() => {
+            navigation.navigate('Shotohome');
+          }}>
+          <MaterialCommunityIcons
+            name="checkbox-marked-circle-outline"
+            color="white"
+            size={26}
+          />
+        </TouchableOpacity>
+      }
+    />
+  );
+};
 const styles = StyleSheet.create({
   container: {
     backgroundColor: 'black',
     flex: 1,
+  },
+  header: {
+    backgroundColor: '#1d2533',
+    borderBottomColor: '#1d2533',
+    height: 90,
   },
   textinput: {
     color: 'white',
@@ -211,7 +199,7 @@ const styles = StyleSheet.create({
     paddingTop: 0,
     marginLeft: 10,
   },
-  inputview: {
+  inputView: {
     display: 'flex',
     width: '100%',
     flexDirection: 'row',
@@ -235,5 +223,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 5,
+  },
+  addText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  typeEmailText: {
+    color: 'white',
+    fontWeight: 'bold',
+    marginLeft: 10,
   },
 });

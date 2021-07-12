@@ -6,10 +6,8 @@ import {
   TouchableOpacity,
   Image,
   StatusBar,
-  ActivityIndicator,
   BackHandler,
 } from 'react-native';
-
 import {Adduser} from '../actions.js';
 import {useDispatch} from 'react-redux';
 import {useFocusEffect} from '@react-navigation/native';
@@ -22,10 +20,6 @@ import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import firebase from '@react-native-firebase/app';
 export default function Login({navigation}) {
-  const [act, setact] = useState(true); 
-  // Activity Indicator
- 
-
   // configure google singin OAuth client id
 
   GoogleSignin.configure({
@@ -89,11 +83,7 @@ export default function Login({navigation}) {
                 timestamp: new Date(),
               });
             await AsyncStorage.setItem('email', googleUser.user.email);
-            await AsyncStorage.setItem('profilepic', googleUser.user.photo);
-            await AsyncStorage.setItem('username', googleUser.user.name);
-
             dispatch(Adduser({email: googleUser.user.email}));
-
             return authUser.user
               .updateProfile({
                 username: googleUser.user.name,
@@ -101,7 +91,6 @@ export default function Login({navigation}) {
                 profilepic: googleUser.user.photo,
               })
               .then(() => {
-                setact(true);
                 navigation.navigate('Shotohome', {
                   email: googleUser.user.email,
                 });
@@ -109,12 +98,10 @@ export default function Login({navigation}) {
           })
           .catch(error => {
             alert(error.message);
-            setact(true);
           });
       } else {
         dispatch(Adduser({email: googleUser.user.email}));
         navigation.navigate('Shotohome');
-        setact(true);
       }
     });
   };
@@ -141,31 +128,25 @@ export default function Login({navigation}) {
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor="#1d2533" />
-
-      {act ? (
-        <View style={styles.container}>
+      <View style={styles.container}>
+        <Image
+          source={require('../assets/shoto.png')}
+          style={styles.shotologo}
+        />
+        <Text style={styles.shoto}>
+          Shotography: The Art of Clicking Together
+        </Text>
+        <TouchableOpacity
+          activeOpacity={0.9}
+          style={styles.button}
+          onPress={signInWithGoogleAsync}>
           <Image
-            source={require('../assets/shoto.png')}
-            style={styles.shotologo}
+            source={require('../assets/google.png')}
+            style={styles.googlelogo}
           />
-          <Text style={styles.shoto}>
-            Shotography: The Art of Clicking Together
-          </Text>
-
-          <TouchableOpacity
-            activeOpacity={0.9}
-            style={styles.button}
-            onPress={signInWithGoogleAsync}>
-            <Image
-              source={require('../assets/google.png')}
-              style={styles.googlelogo}
-            />
-            <Text style={styles.text}>Login With Google</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <ActivityIndicator size="large" color="white" />
-      )}
+          <Text style={styles.text}>Login With Google</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -200,8 +181,9 @@ const styles = StyleSheet.create({
     margin: 18,
   },
   googlelogo: {
-    height: 40,
-    width: 40,
+    height: 30,
+    width: 30,
+    resizeMode: 'contain',
   },
   shotologo: {
     height: 160,

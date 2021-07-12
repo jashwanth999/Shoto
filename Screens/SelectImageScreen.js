@@ -15,35 +15,13 @@ import firestore from '@react-native-firebase/firestore';
 import {useSelector} from 'react-redux';
 export default function SelectImageScreen({navigation, route}) {
   const {image, imagename} = route.params;
-  const db=firestore()
+  const db = firestore();
   const user = useSelector(state => state.user.user);
   const [search, setSearch] = useState('');
   const [reels, setReels] = useState([]);
   const [startAfter, setStartAfter] = useState(null);
   const [LastPosition, setLastPosition] = useState(false);
   const [isLoading, setisLoading] = useState(false);
-  useEffect(() => {
-    let mounted = true;
-    if (mounted && user) {
-      fetchReelList().then(snapshot => {
-        const lastdata = snapshot.docs[snapshot.docs.length - 1];
-        snapshot.docs.length < 5
-          ? setLastPosition(true)
-          : setLastPosition(false);
-        setStartAfter(lastdata);
-        setisLoading(true);
-        setReels(
-          snapshot.docs.map(doc => ({
-            id: doc.id,
-            reellist: doc.data(),
-          })),
-        );
-      });
-    }
-    return () => {
-      mounted = false;
-    };
-  }, [user?.email]);
   const fetchReelList = async () => {
     try {
       return await db
@@ -67,37 +45,57 @@ export default function SelectImageScreen({navigation, route}) {
         .get();
     } catch (error) {}
   };
+  useEffect(() => {
+    let mounted = true;
+    if (mounted && user) {
+      fetchReelList().then(snapshot => {
+        const lastdata = snapshot.docs[snapshot.docs.length - 1];
+        snapshot.docs.length < 5
+          ? setLastPosition(true)
+          : setLastPosition(false);
+        setStartAfter(lastdata);
+        setisLoading(true);
+        setReels(
+          snapshot.docs.map(doc => ({
+            id: doc.id,
+            reellist: doc.data(),
+          })),
+        );
+      });
+    }
+    return () => {
+      mounted = false;
+    };
+  }, [user?.email]);
+
+  const loadMore = () => {
+    fetchReelListMore().then(snapshot => {
+      if (snapshot && !LastPosition) {
+        snapshot.docs.length < 5
+          ? setLastPosition(true)
+          : setLastPosition(false);
+        const lastdata = snapshot.docs[snapshot.docs.length - 1];
+        if (lastdata) {
+          setStartAfter(lastdata);
+        } else {
+          setStartAfter(null);
+        }
+
+        setisLoading(true);
+
+        setReels([
+          ...reels,
+          ...snapshot.docs.map(doc => ({
+            id: doc.id,
+            reellist: doc.data(),
+          })),
+        ]);
+      }
+    });
+  };
   return (
     <View style={styles.container}>
-      <Header
-        containerStyle={{
-          backgroundColor: '#1d2533',
-          borderBottomColor: 'none',
-          height: 90,
-        }}
-        leftComponent={
-          <Ionicons
-            onPress={() => navigation.goBack()}
-            name="chevron-back"
-            color="#d4d4d4"
-            size={21}
-          />
-        }
-        centerComponent={
-          <View style={styles.headerView}>
-            <Text
-              style={{
-                color: '#d4d4d4',
-                fontSize: 16,
-
-                fontWeight: 'bold',
-              }}>
-              Select a Reel to Save
-            </Text>
-          </View>
-        }
-      />
-
+      <HeaderComponent navigation={navigation} />
       <StatusBar backgroundColor="#1d2533" />
       <View style={styles.searchView}>
         <MaterialIcons
@@ -114,7 +112,7 @@ export default function SelectImageScreen({navigation, route}) {
           placeholder="Type Here"
         />
       </View>
-      {isLoading && reels ? (
+      {isLoading ? (
         <FlatList
           showsVerticalScrollIndicator={false}
           data={reels}
@@ -138,31 +136,7 @@ export default function SelectImageScreen({navigation, route}) {
             )
           }
           keyExtractor={item => item.id}
-          onEndReached={() => {
-            fetchReelListMore().then(snapshot => {
-              if (snapshot && !LastPosition) {
-                snapshot.docs.length < 5
-                  ? setLastPosition(true)
-                  : setLastPosition(false);
-                const lastdata = snapshot.docs[snapshot.docs.length - 1];
-                if (lastdata) {
-                  setStartAfter(lastdata);
-                } else {
-                  setStartAfter(null);
-                }
-
-                setisLoading(true);
-
-                setReels([
-                  ...reels,
-                  ...snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    reellist: doc.data(),
-                  })),
-                ]);
-              }
-            });
-          }}
+          onEndReached={loadMore}
           onEndReachedThreshold={5}
           ListFooterComponent={
             !LastPosition && <ActivityIndicator color="grey" size="small" />
@@ -170,13 +144,51 @@ export default function SelectImageScreen({navigation, route}) {
           scrollEventThrottle={150}
         />
       ) : (
-        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-          <ActivityIndicator size="large" color="grey" />
-        </View>
+        <LoadingView />
       )}
     </View>
   );
 }
+
+const HeaderComponent = ({navigation}) => {
+  return (
+    <Header
+      containerStyle={{
+        backgroundColor: '#1d2533',
+        borderBottomColor: 'none',
+        height: 90,
+      }}
+      leftComponent={
+        <Ionicons
+          onPress={() => navigation.goBack()}
+          name="chevron-back"
+          color="#d4d4d4"
+          size={21}
+        />
+      }
+      centerComponent={
+        <View style={styles.headerView}>
+          <Text
+            style={{
+              color: '#d4d4d4',
+              fontSize: 16,
+
+              fontWeight: 'bold',
+            }}>
+            Select a Reel to Save
+          </Text>
+        </View>
+      }
+    />
+  );
+};
+const LoadingView = () => {
+  return (
+    <View style={styles.loadingView}>
+      <ActivityIndicator size="large" color="grey" />
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -207,6 +219,11 @@ const styles = StyleSheet.create({
   headerView: {
     display: 'flex',
     flexDirection: 'row',
+    alignItems: 'center',
+  },
+  loadingView: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
   },
 });
