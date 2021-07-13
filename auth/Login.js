@@ -19,13 +19,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import firebase from '@react-native-firebase/app';
+import Snackbar from 'react-native-snackbar';
 export default function Login({navigation}) {
   // configure google singin OAuth client id
 
   GoogleSignin.configure({
     scopes: [], // what API you want to access on behalf of the user, default is email and profile
     webClientId:
-      '821295087358-f7nsmu3rup0ghfflnvk7ret61mv49gec.apps.googleusercontent.com', // client ID of type WEB for your server (needed to verify user ID and offline access)
+      '821295087358-f7nsmu3rup0ghfflnvk7ret61mv49gec.apps.googleusercontent.co', // client ID of type WEB for your server (needed to verify user ID and offline access)
     offlineAccess: true, // if you want to access Google API on behalf of the user FROM YOUR SERVER
   });
 
@@ -115,15 +116,25 @@ export default function Login({navigation}) {
     } catch (error) {
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
         // user cancelled the login flow
+        SnackBarComponent('user cancelled the login flow');
       } else if (error.code === statusCodes.IN_PROGRESS) {
         // operation (e.g. sign in) is in progress already
+        SnackBarComponent('in Progress');
       } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
         // play services not available or outdated
+        SnackBarComponent('play services not available or outdated');
       } else {
         // some other error happened
+        SnackBarComponent('Some  error happened');
       }
     }
   }
+  const SnackBarComponent = message => {
+    return Snackbar.show({
+      text: message,
+      duration: Snackbar.LENGTH_SHORT,
+    });
+  };
 
   return (
     <View style={styles.container}>
