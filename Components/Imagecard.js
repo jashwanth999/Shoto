@@ -53,7 +53,6 @@ export default function imagecard({
       .doc(reelid)
       .collection('reelimages')
       .doc(imageid);
-      // try(db.collect().then()
     RNS3.put(file, options)
       .then(response => {
         if (response.status !== 201) {
@@ -76,7 +75,6 @@ export default function imagecard({
         }
       })
       .catch(error => {
-        console.log('error');
         uploadToS3Ref.update({
           s3url: '',
           isUploaded: false,

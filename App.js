@@ -6,6 +6,13 @@ import {LogBox} from 'react-native';
 import {Provider} from 'react-redux';
 import {store} from './store.js';
 import firebase from '@react-native-firebase/app';
+
+import * as Sentry from '@sentry/react-native';
+
+Sentry.init({
+  dsn: 'https://4eb4bfb52b7b4d4290142957f88b6223@o918657.ingest.sentry.io/5862073',
+});
+
 const firebaseConfig = {
   apiKey: 'AIzaSyBJFyW2KfP5Uo0E3gyYzFJ5W2LDGJnciXo',
   authDomain: 'shotography-6a40e.firebaseapp.com',

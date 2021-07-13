@@ -18,27 +18,21 @@ import {useSelector, useDispatch} from 'react-redux';
 import {Addreelimages, setindex} from '../actions.js';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
-import Footer2 from '../Screens/Footer2.js';
 import {useFocusEffect} from '@react-navigation/native';
 import {RNS3} from 'react-native-aws3';
-
+import ImagePicker from 'react-native-image-crop-picker';
+import Footer from '../Screens/Footer.js';
 export default function ReelView({navigation, route}) {
   const width = Dimensions.get('window').width;
-
   const db = firestore();
   const {image, imagename} = route.params;
-
   const user = useSelector(state => state.user.user);
-
   // get images of reels stored in reducers
-
   const reelimages = useSelector(state => state.reellistimages.reellistimages);
   const [flatRef, setFlatRef] = useState();
   const dispatch = useDispatch();
   const [lastPosition, setLastPosition] = useState(false);
-
   const [startAfter, setstartAfter] = useState(null);
-  const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   // get details of reels stored in reducers
 
@@ -60,42 +54,35 @@ export default function ReelView({navigation, route}) {
     successActionStatus: 201,
   };
   const uploadImage = imageid => {
-    try {
-      RNS3.put(file, options).then(response => {
+    let uploadToS3Ref = db
+      .collection('reels')
+      .doc(reeldata.reelid)
+      .collection('reelimages')
+      .doc(imageid);
+    RNS3.put(file, options)
+      .then(response => {
         if (response.status !== 201) {
           alert('Some error occurred');
         } else {
           try {
-            db.collection('reels')
-              .doc(reeldata.reelid)
-              .collection('reelimages')
-              .doc(imageid)
-              .update({
-                s3url: response.body.postResponse.location,
-                isUploaded: true,
-              });
+            uploadToS3Ref.update({
+              s3url: response.body.postResponse.location,
+              isUploaded: true,
+            });
           } catch (error) {
-            db.collection('reels')
-              .doc(reeldata.reelid)
-              .collection('reelimages')
-              .doc(imageid)
-              .update({
-                s3url: '',
-                isUploaded: false,
-              });
+            uploadToS3Ref.update({
+              s3url: '',
+              isUploaded: false,
+            });
           }
         }
-      });
-    } catch (err) {
-      db.collection('reels')
-        .doc(reeldata.reelid)
-        .collection('reelimages')
-        .doc(imageid)
-        .update({
+      })
+      .catch(error => {
+        uploadToS3Ref.update({
           s3url: '',
           isUploaded: false,
         });
-    }
+      });
   };
   const uploadLocalImage = () => {
     const data = {
@@ -110,12 +97,10 @@ export default function ReelView({navigation, route}) {
       .collection('reels')
       .doc(reeldata.reelid)
       .collection('reelimages');
-
     newImageCollection.add(data).then(res => {
       uploadImage(res.id);
     });
   };
-
   useEffect(() => {
     if (image) {
       uploadLocalImage();
@@ -165,14 +150,7 @@ export default function ReelView({navigation, route}) {
             })),
           ),
         );
-        setData(
-          snapshot.docs.map(doc => ({
-            id: doc.id,
-            reelimages: doc.data(),
-          })),
-        );
       });
-
     return unsubscribe;
   }, [reeldata.reelid]);
 
@@ -194,6 +172,44 @@ export default function ReelView({navigation, route}) {
     indexscroll();
   }, [yof]);
 
+  const renderFooter = () => {
+    return spinner && !lastPosition ? <ActivityIndicator /> : null;
+  };
+
+  const loadMore = () => {
+    if (!lastPosition) {
+      setSpinner(true);
+      const unsubscribe = db
+        .collection('reels')
+        .doc(reeldata.reelid)
+        .collection('reelimages')
+        .orderBy('timestamp', 'desc')
+        .startAfter(startAfter)
+        .limit(10)
+        .onSnapshot(snapshot => {
+          if (!snapshot.empty) {
+            const lastdata = snapshot.docs[snapshot.docs.length - 1];
+            snapshot.docs.length < 10
+              ? setLastPosition(true)
+              : setLastPosition(false);
+            if (lastdata) {
+              setstartAfter(lastdata);
+            } else setstartAfter(null);
+            setSpinner(false);
+            dispatch(
+              Addreelimages([
+                ...reelimages,
+                ...snapshot.docs.map(doc => ({
+                  id: doc.id,
+                  reelimages: doc.data(),
+                })),
+              ]),
+            );
+          }
+        });
+      return unsubscribe;
+    }
+  };
   const renderImage = useCallback(({item, index}) => {
     if (
       (item.reelimages?.isUploaded === false &&
@@ -241,50 +257,17 @@ export default function ReelView({navigation, route}) {
       );
     }
   }, []);
-  const renderFooter = () => {
-    return spinner && !lastPosition ? <ActivityIndicator /> : null;
-  };
-
-  const loadMore = () => {
-    if (!lastPosition) {
-      setSpinner(true);
-      const unsubscribe = db
-        .collection('reels')
-        .doc(reeldata.reelid)
-        .collection('reelimages')
-        .orderBy('timestamp', 'desc')
-        .startAfter(startAfter)
-        .limit(10)
-        .onSnapshot(snapshot => {
-          if (!snapshot.empty) {
-            const lastdata = snapshot.docs[snapshot.docs.length - 1];
-            snapshot.docs.length < 10
-              ? setLastPosition(true)
-              : setLastPosition(false);
-            if (lastdata) {
-              setstartAfter(lastdata);
-            } else setstartAfter(null);
-            setSpinner(false);
-            dispatch(
-              Addreelimages([
-                ...reelimages,
-                ...snapshot.docs.map(doc => ({
-                  id: doc.id,
-                  reelimages: doc.data(),
-                })),
-              ]),
-            );
-            setData([
-              ...data,
-              ...snapshot.docs.map(doc => ({
-                id: doc.id,
-                reelimages: doc.data(),
-              })),
-            ]);
-          }
-        });
-      return unsubscribe;
-    }
+  const takePhoto = () => {
+    ImagePicker.openCamera({
+      width: 300,
+      height: 400,
+    }).then(image => {
+      dispatch(setindex(0));
+      navigation.navigate('ReelView', {
+        image: image.path,
+        imagename: image.path.replace(/^.*[\\\/]/, ''),
+      });
+    });
   };
 
   return (
@@ -357,7 +340,7 @@ export default function ReelView({navigation, route}) {
           </View>
         </View>
       )}
-      <Footer2 navigation={navigation} reelname={reeldata.reelname} />
+      <Footer navigation={navigation} takePhoto={takePhoto} />
     </View>
   );
 }

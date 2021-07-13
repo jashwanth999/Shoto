@@ -52,13 +52,15 @@ export default function Reellist({navigation, name, id, t, image, imagename}) {
       Addreeldata({
         reelname: name,
         reelid: id,
-        imageslength: images.length,
       }),
     );
   };
 
   return (
-    <TouchableOpacity activeOpacity={0.9} style={styles.reelContainer}>
+    <TouchableOpacity
+      onPress={upload}
+      activeOpacity={0.9}
+      style={styles.reelContainer}>
       <View style={styles.top}>
         <Text style={styles.reelCardName}>{name}</Text>
         <View style={{flexDirection: 'row'}}>
@@ -70,8 +72,8 @@ export default function Reellist({navigation, name, id, t, image, imagename}) {
       </View>
       <View style={styles.bottom}>
         <ContributorsView reelUsers={reelUsers} />
-        <TouchableOpacity onPress={upload} style={styles.save}>
-          <Text style={styles.saveButtonText}>Save</Text>
+        <TouchableOpacity style={styles.save}>
+          <Text style={styles.saveButtonText}>SAVE</Text>
           <MaterialIcons
             name="chevron-right"
             color="rgba(36, 123, 160, 0.8)"

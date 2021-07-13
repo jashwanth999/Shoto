@@ -1,34 +1,13 @@
 import React from 'react';
 import {StyleSheet, View, TouchableOpacity, Text} from 'react-native';
 import {MaterialCommunityIcons, MaterialIcons} from '../Styles/Icons';
-import ImagePicker from 'react-native-image-crop-picker';
-import {useDispatch, useSelector} from 'react-redux';
-import {setindex} from '../actions';
-import firestore from '@react-native-firebase/firestore';
-function Footer2({navigation}) {
-  const db = firestore();
-  const user = useSelector(state => state.user.user);
-  const reeldata = useSelector(state => state.reeldata.reeldata);
-  const dispatch = useDispatch();
-  const takePhoto2 = () => {
-    ImagePicker.openCamera({
-      width: 300,
-      height: 400,
-    }).then(image => {
-      dispatch(setindex(0));
-
-      navigation.navigate('ReelView', {
-        image: image.path,
-        imagename: image.path.replace(/^.*[\\\/]/, ''),
-      });
-    });
-  };
+function Footer2(props) {
   return (
     <View style={styles.container}>
       <TouchableOpacity
         activeOpacity={0.8}
         onPress={() => {
-          navigation.navigate('Adduserlist');
+          props.navigation.navigate('Adduserlist');
         }}
         style={styles.fotterView}>
         <MaterialIcons name="person-add" color="#d4d4d4" size={24} />
@@ -36,14 +15,14 @@ function Footer2({navigation}) {
       </TouchableOpacity>
       <TouchableOpacity
         activeOpacity={0.8}
-        onPress={takePhoto2}
+        onPress={props.takePhoto}
         style={styles.middleIcon}>
         <MaterialCommunityIcons name="camera-iris" color="#d4d4d4" size={34} />
       </TouchableOpacity>
       <TouchableOpacity
         activeOpacity={0.8}
         onPress={() => {
-          navigation.navigate('Shotohome');
+          props.navigation.navigate('Shotohome');
         }}
         style={styles.fotterView}>
         <MaterialIcons name="home" color="#d4d4d4" size={24} />

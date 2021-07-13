@@ -1,180 +1,80 @@
-import React, {useState} from 'react';
-import {
-  StyleSheet,
-  View,
-  TouchableOpacity,
-  Text,
-  TextInput,
-  ActivityIndicator,
-} from 'react-native';
-import {Ionicons, MaterialCommunityIcons} from '../Styles/Icons';
-import {Overlay} from 'react-native-elements';
-import {useDispatch, useSelector} from 'react-redux';
-import {Addreeldata, setChange} from '../actions';
-import firestore from '@react-native-firebase/firestore';
-import ImagePicker from 'react-native-image-crop-picker';
-function Footer({navigation}) {
-  const db = firestore();
-  const dispatch = useDispatch();
-
-  const changed = useSelector(state => state.changed.changed);
-
-  // user details
-
-  const user = useSelector(state => state.user.user);
-
-  //  list of all reel names of a user
-
-  const reelnames = useSelector(state => state.reelnames.Reelnames);
-
-  const [visible, setVisible] = useState(false);
-
-  const [act, setact] = useState(false); // activity indicator
-
-  const [reelname, setreelname] = useState(''); // text input value
-
-  const toggleOverlay = () => {
-    setVisible(!visible);
-  };
-  const addreel = () => {
-    // checking whether the reelname is previously used or not
-
-    if (!reelnames.includes(reelname.toLowerCase())) {
-      try {
-        navigation.navigate('Adduserlist');
-        toggleOverlay();
-        const data = {
-          reelname: reelname,
-          timestamp: new Date(),
-        };
-        let uploadNewReel = db
-          .collection('user_reels')
-          .doc(user.email)
-          .collection('reellist')
-          .doc();
-        uploadNewReel.set(data);
-        let reelid = uploadNewReel.id;
-        dispatch(
-          Addreeldata({
-            useremail: user.email,
-            reelname: reelname,
-            reelid: reelid,
-            username: user.username,
-          }),
-        );
-        db.collection('reels').doc(reelid).set({
-          created_useremail: user.email,
-          reelname: reelname,
-          created_at: new Date(),
-        });
-        db.collection('reels')
-          .doc(reelid)
-          .collection('reelusers')
-          .doc(user.email)
-          .set({
-            useremail: user.email,
-            reelid: reelid,
-            timestamp: new Date(),
-            profilepic: user.profilepic,
-          });
-        dispatch(setChange(!changed));
-      } catch (error) {
-        toggleOverlay();
-        console.log(error.message);
-      }
-    } else {
-      // if reelname already exist it alerts
-
-      alert('Reelname already exist please change the reelname');
-    }
-    setreelname('');
-  };
-
-  // take photo it navigates to save image screen
-
-  const takePhoto = async () => {
-    ImagePicker.openCamera({
-      width: 300,
-      height: 400,
-    })
-      .then(image => {
-        navigation.navigate('selectimagescreen', {
-          image: image.path,
-          imagename: image.path.replace(/^.*[\\\/]/, ''),
-        });
-      })
-      .catch(err => {
-        // Here you handle if the user cancels or any other errors
-      });
-  };
-
+import React from 'react';
+import {StyleSheet, View, TouchableOpacity, Text} from 'react-native';
+import {Ionicons, MaterialCommunityIcons, MaterialIcons} from '../Styles/Icons';
+function Footer(props) {
+  if (props.page === 'home') {
+    return (
+      <HomeFooter
+        navigation={props.navigation}
+        takePhoto={props.takePhoto}
+        toggleOverlay={props.toggleOverlay}
+      />
+    );
+  } else {
+    return (
+      <ReelViewFooter
+        takePhoto={props.takePhoto}
+        navigation={props.navigation}
+      />
+    );
+  }
+}
+const HomeFooter = props => {
   return (
     <View style={styles.container}>
       <TouchableOpacity
         activeOpacity={0.8}
-        onPress={toggleOverlay}
+        onPress={props.toggleOverlay}
         style={styles.fotterView}>
         <MaterialCommunityIcons name="movie-roll" color="#d4d4d4" size={24} />
         <Text style={styles.text}>New reel</Text>
       </TouchableOpacity>
-
       <TouchableOpacity
         activeOpacity={0.8}
-        onPress={takePhoto}
+        onPress={props.takePhoto}
         style={styles.middleIcon}>
         <MaterialCommunityIcons name="camera-iris" color="#d4d4d4" size={34} />
       </TouchableOpacity>
       <TouchableOpacity
         activeOpacity={0.8}
-        onPress={() => navigation.navigate('userprofile')}
+        onPress={() => props.navigation.navigate('userprofile')}
         style={styles.fotterView}>
         <Ionicons name="ios-person-circle" color="#d4d4d4" size={24} />
         <Text style={styles.text}>Profile</Text>
       </TouchableOpacity>
-      <Overlay
-        isVisible={visible}
-        overlayStyle={{backgroundColor: '#1d2533', borderRadius: 10}}
-        onBackdropPress={toggleOverlay}
-        backdropStyle={{backgroundColor: 'rgba( 0, 0, 0, 0.8)'}}>
-        {act ? (
-          <View style={styles.actcontainer}>
-            <ActivityIndicator size="large" color="grey" />
-          </View>
-        ) : (
-          <View style={styles.addreelnamecontainer}>
-            <View style={{width: '100%', alignItems: 'center'}}>
-              <Text style={styles.createnewthread}>New Reel !</Text>
-            </View>
-            <View style={{marginTop: 4, marginLeft: 4}}>
-              <Text style={styles.whatshouldwenameit}>
-                What should we name it ?
-              </Text>
-              <TextInput
-                value={reelname}
-                placeholderTextColor="grey"
-                onChangeText={text => setreelname(text)}
-                style={styles.textinput}
-                placeholder="Getaway with friends"
-              />
-            </View>
-            <View style={styles.footer}>
-              <TouchableOpacity
-                style={styles.footerButtonsContainer}
-                onPress={toggleOverlay}>
-                <Text style={styles.footertext}>Go Back</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.footerButtonsContainer}
-                onPress={!reelname ? () => {} : addreel}>
-                <Text style={styles.footertext}>Create</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-      </Overlay>
     </View>
   );
-}
+};
+const ReelViewFooter = props => {
+  return (
+    <View style={styles.container}>
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={() => {
+          props.navigation.navigate('Adduserlist');
+        }}
+        style={styles.fotterView}>
+        <MaterialIcons name="person-add" color="#d4d4d4" size={24} />
+        <Text style={styles.text}>Add People</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={props.takePhoto}
+        style={styles.middleIcon}>
+        <MaterialCommunityIcons name="camera-iris" color="#d4d4d4" size={34} />
+      </TouchableOpacity>
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={() => {
+          props.navigation.navigate('Shotohome');
+        }}
+        style={styles.fotterView}>
+        <MaterialIcons name="home" color="#d4d4d4" size={24} />
+        <Text style={styles.text}>Home</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
