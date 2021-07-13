@@ -10,16 +10,25 @@ import {
   Platform,
   TextInput,
   Text,
+  TouchableOpacity,
 } from 'react-native';
 import {Header, Avatar} from 'react-native-elements';
 import Reellist from './Reellist.js';
 import {useDispatch, useSelector} from 'react-redux';
 import {Ionicons, MaterialIcons} from '../Styles/Icons.js';
-import {Addreel, Adduser, reelNameAction} from '../actions.js';
+import {
+  Addreel,
+  Addreeldata,
+  Adduser,
+  reelNameAction,
+  setChange,
+} from '../actions.js';
 import {useFocusEffect} from '@react-navigation/native';
 import Footer from '../Screens/Footer.js';
 import firestore from '@react-native-firebase/firestore';
 import StartingHomePage from './StartingHomePage.js';
+import ImagePicker from 'react-native-image-crop-picker';
+import {Overlay} from 'react-native-elements';
 const wait = timeout => {
   return new Promise(resolve => setTimeout(resolve, timeout));
 };
@@ -207,6 +216,93 @@ export default function ShotoHome({navigation}) {
       );
     }
   });
+  const mainButton = () => {
+    alert('bt');
+  };
+
+  //  list of all reel names of a user
+
+  const reelnames = useSelector(state => state.reelnames.Reelnames);
+
+  const [visible, setVisible] = useState(false);
+
+  const [reelname, setreelname] = useState(''); // text input value
+
+  const toggleOverlay = () => {
+    setVisible(!visible);
+  };
+  const addReel = () => {
+    // checking whether the reelname is previously used or not
+
+    if (!reelnames.includes(reelname.toLowerCase())) {
+      try {
+        navigation.navigate('Adduserlist');
+        toggleOverlay();
+        const data = {
+          reelname: reelname,
+          timestamp: new Date(),
+        };
+        let uploadNewReel = db
+          .collection('user_reels')
+          .doc(user.email)
+          .collection('reellist')
+          .doc();
+        uploadNewReel.set(data);
+        let reelid = uploadNewReel.id;
+        dispatch(
+          Addreeldata({
+            useremail: user.email,
+            reelname: reelname,
+            reelid: reelid,
+            username: user.username,
+          }),
+        );
+        db.collection('reels').doc(reelid).set({
+          created_useremail: user.email,
+          reelname: reelname,
+          created_at: new Date(),
+        });
+        db.collection('reels')
+          .doc(reelid)
+          .collection('reelusers')
+          .doc(user.email)
+          .set({
+            useremail: user.email,
+            reelid: reelid,
+            timestamp: new Date(),
+            profilepic: user.profilepic,
+          });
+        dispatch(setChange(!changed));
+      } catch (error) {
+        toggleOverlay();
+        console.log(error.message);
+      }
+    } else {
+      // if reelname already exist it alerts
+
+      alert('Reelname already exist please change the reelname');
+    }
+    setreelname('');
+  };
+
+  // take photo it navigates to save image screen
+
+  const takePhoto = async () => {
+    ImagePicker.openCamera({
+      width: 300,
+      height: 400,
+    })
+      .then(image => {
+        navigation.navigate('selectimagescreen', {
+          image: image.path,
+          imagename: image.path.replace(/^.*[\\\/]/, ''),
+        });
+      })
+      .catch(err => {
+        // Here you handle if the user cancels or any other errors
+        console.log('cancelled');
+      });
+  };
 
   return (
     <KeyboardAvoidingView
@@ -283,7 +379,6 @@ export default function ShotoHome({navigation}) {
       )}
 
       <StatusBar backgroundColor="#1d2533" />
-
       {isLoading ? (
         reels?.length === 0 ? (
           <StartingHomePage />
@@ -309,11 +404,63 @@ export default function ShotoHome({navigation}) {
       ) : (
         <Loading />
       )}
-
-      <Footer navigation={navigation} />
+      <Footer
+        navigation={navigation}
+        addReel={addReel}
+        takePhoto={takePhoto}
+        toggleOverlay={toggleOverlay}
+        page="home"
+        
+      />
+      <Modal
+        visible={visible}
+        toggleOverlay={toggleOverlay}
+        addReel={addReel}
+        setreelname={setreelname}
+        reelname={reelname}
+      />
     </KeyboardAvoidingView>
   );
 }
+const Modal = props => {
+  return (
+    <Overlay
+      isVisible={props.visible}
+      overlayStyle={{backgroundColor: '#1d2533', borderRadius: 10}}
+      onBackdropPress={props.toggleOverlay}
+      backdropStyle={{backgroundColor: 'rgba( 0, 0, 0, 0.8)'}}>
+      <View style={styles.addreelnamecontainer}>
+        <View style={{width: '100%', alignItems: 'center'}}>
+          <Text style={styles.createnewthread}>New Reel !</Text>
+        </View>
+        <View style={{marginTop: 4, marginLeft: 4}}>
+          <Text style={styles.whatshouldwenameit}>
+            What should we name it ?
+          </Text>
+          <TextInput
+            value={props.reelname}
+            placeholderTextColor="grey"
+            onChangeText={text => props.setreelname(text)}
+            style={styles.textinput}
+            placeholder="Getaway with friends"
+          />
+        </View>
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={styles.footerButtonsContainer}
+            onPress={props.toggleOverlay}>
+            <Text style={styles.footertext}>Go Back</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.footerButtonsContainer}
+            onPress={!props.reelname ? () => {} : props.addReel}>
+            <Text style={styles.footertext}>Create</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Overlay>
+  );
+};
 const Loading = () => {
   return (
     <View style={styles.loadingView}>
@@ -352,6 +499,99 @@ const styles = StyleSheet.create({
   loadingView: {
     flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    backgroundColor: '#1d2533',
+    borderColor: '#262626',
+    borderTopWidth: 0.25,
+    flexDirection: 'row',
+    height: 60,
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  fotterView: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  text: {
+    color: '#d4d4d4',
+    fontSize: 13,
+  },
+  middleIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1d2533',
+    marginBottom: 50,
+    shadowColor: '#111',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.2,
+    elevation: 2,
+    minWidth: 40,
+    minHeight: 40,
+    borderWidth: 0.2,
+    borderColor: '#d4d4d4',
+  },
+  addreelnamecontainer: {
+    height: 200,
+    width: 290,
+    display: 'flex',
+    flexDirection: 'column',
+    backgroundColor: '#1d2533',
+    paddingTop: 15,
+    justifyContent: 'space-between',
+  },
+  createnewthread: {
+    fontSize: 20,
+    color: '#d4d4d4',
+    marginTop: 10,
+  },
+  whatshouldwenameit: {
+    color: '#d4d4d4',
+    fontSize: 14,
+  },
+  textinput: {
+    padding: 2,
+    borderRadius: 5,
+    width: '95%',
+    fontSize: 16,
+    borderBottomColor: 'grey',
+    borderBottomWidth: 1,
+    color: '#d4d4d4',
+    marginTop: 4,
+  },
+  footer: {
+    display: 'flex',
+    flexDirection: 'row',
+    width: '100%',
+    justifyContent: 'space-around',
+    paddingBottom: 15,
+  },
+  footertext: {
+    fontSize: 15,
+    color: '#d4d4d4',
+  },
+  actcontainer: {
+    height: 200,
+    width: 290,
+    display: 'flex',
+    backgroundColor: '#1d2533',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  footerButtonsContainer: {
+    borderColor: 'grey',
+    borderWidth: 1,
+    padding: 3,
+    width: '40%',
     alignItems: 'center',
   },
 });
