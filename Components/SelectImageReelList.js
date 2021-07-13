@@ -72,7 +72,7 @@ export default function Reellist({navigation, name, id, t, image, imagename}) {
       </View>
       <View style={styles.bottom}>
         <ContributorsView reelUsers={reelUsers} />
-        <TouchableOpacity style={styles.save}>
+        <View style={styles.save}>
           <Text style={styles.saveButtonText}>SAVE</Text>
           <MaterialIcons
             name="chevron-right"
@@ -80,7 +80,7 @@ export default function Reellist({navigation, name, id, t, image, imagename}) {
             size={20}
             style={styles.saveIcon}
           />
-        </TouchableOpacity>
+        </View>
       </View>
     </TouchableOpacity>
   );

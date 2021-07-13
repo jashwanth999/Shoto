@@ -82,6 +82,7 @@ export default function ReelView({navigation, route}) {
           s3url: '',
           isUploaded: false,
         });
+        console.log(error.message);
       });
   };
   const uploadLocalImage = () => {
