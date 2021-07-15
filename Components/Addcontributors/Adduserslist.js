@@ -14,11 +14,13 @@ import Userlist from './Userlist';
 import {useSelector, useDispatch} from 'react-redux';
 import {reeluseremail} from '../../actions';
 import firestore from '@react-native-firebase/firestore';
-
+import Snackbar from 'react-native-snackbar';
+import * as Sentry from '@sentry/react-native';
 export default function Adduserslist({navigation}) {
   const db = firestore();
   const [profilepic, setProfilePic] = useState(null);
   const [inputEmail, setInputEmail] = useState('');
+  const user = useSelector(state => state.user.user);
 
   const [admin, setAdmin] = useState('');
 
@@ -95,7 +97,6 @@ export default function Adduserslist({navigation}) {
             timestamp: new Date(),
             reelid: reeldata.reelid,
           });
-
         db.collection('user_reels')
           .doc(inputEmail.toLowerCase())
           .collection('reellist')
@@ -105,10 +106,37 @@ export default function Adduserslist({navigation}) {
             timestamp: new Date(),
           });
       } catch (error) {
-        alert('some error as occured');
+        Sentry.captureException(error.message);
+        SnackBarComponent('Some error occured please retry');
       }
     } else {
-      alert("It's not a valid email");
+      SnackBarComponent('Please type valid email');
+    }
+  };
+  const SnackBarComponent = message => {
+    return Snackbar.show({
+      text: message,
+      duration: Snackbar.LENGTH_SHORT,
+    });
+  };
+  const deleteContributors = useremail => {
+    if (admin === user.email) {
+      if (admin === useremail) {
+        SnackBarComponent('You cannot delete yourself');
+      } else {
+        db.collection('reels')
+          .doc(reeldata.reelid)
+          .collection('reelusers')
+          .doc(useremail)
+          .delete();
+        db.collection('user_reels')
+          .doc(useremail)
+          .collection('reellist')
+          .doc(reeldata.reelid)
+          .delete();
+      }
+    } else {
+      SnackBarComponent('Only admin can delete contributors');
     }
   };
 
@@ -137,8 +165,13 @@ export default function Adduserslist({navigation}) {
         </TouchableOpacity>
       </View>
       <ScrollView contentContainerStyle={{marginTop: 15, marginLeft: 10}}>
-        {emails.map((users, index) => (
-          <Userlist key={index} useremail={users} admin={admin} />
+        {emails.map((useremail, index) => (
+          <Userlist
+            key={index}
+            useremail={useremail}
+            deleteContributors={deleteContributors}
+            admin={admin}
+          />
         ))}
       </ScrollView>
     </View>
@@ -167,7 +200,12 @@ const HeaderComponent = ({navigation, reelname}) => {
       rightComponent={
         <TouchableOpacity
           onPress={() => {
-            navigation.navigate('Shotohome');
+            navigation.navigate('ReelView', {
+              mediumImage: '',
+              originalImage: '',
+              mediumImageName: '',
+              originalImageName: '',
+            });
           }}>
           <MaterialCommunityIcons
             name="checkbox-marked-circle-outline"

@@ -23,20 +23,20 @@ const HomeFooter = props => {
   return (
     <View style={styles.container}>
       <TouchableOpacity
-        activeOpacity={0.8}
+        activeOpacity={0.5}
         onPress={props.toggleOverlay}
         style={styles.fotterView}>
         <MaterialCommunityIcons name="movie-roll" color="#d4d4d4" size={24} />
         <Text style={styles.text}>New reel</Text>
       </TouchableOpacity>
       <TouchableOpacity
-        activeOpacity={0.8}
+        activeOpacity={0.5}
         onPress={props.takePhoto}
         style={styles.middleIcon}>
         <MaterialCommunityIcons name="camera-iris" color="#d4d4d4" size={34} />
       </TouchableOpacity>
       <TouchableOpacity
-        activeOpacity={0.8}
+        activeOpacity={0.5}
         onPress={() => props.navigation.navigate('userprofile')}
         style={styles.fotterView}>
         <Ionicons name="ios-person-circle" color="#d4d4d4" size={24} />
@@ -49,7 +49,7 @@ const ReelViewFooter = props => {
   return (
     <View style={styles.container}>
       <TouchableOpacity
-        activeOpacity={0.8}
+        activeOpacity={0.5}
         onPress={() => {
           props.navigation.navigate('Adduserlist');
         }}
@@ -58,13 +58,13 @@ const ReelViewFooter = props => {
         <Text style={styles.text}>Add People</Text>
       </TouchableOpacity>
       <TouchableOpacity
-        activeOpacity={0.8}
+        activeOpacity={0.5}
         onPress={props.takePhoto}
         style={styles.middleIcon}>
         <MaterialCommunityIcons name="camera-iris" color="#d4d4d4" size={34} />
       </TouchableOpacity>
       <TouchableOpacity
-        activeOpacity={0.8}
+        activeOpacity={0.5}
         onPress={() => {
           props.navigation.navigate('Shotohome');
         }}

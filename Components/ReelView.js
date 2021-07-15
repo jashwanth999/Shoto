@@ -22,11 +22,17 @@ import {useFocusEffect} from '@react-navigation/native';
 import {RNS3} from 'react-native-aws3';
 import ImagePicker from 'react-native-image-crop-picker';
 import Footer from '../Screens/Footer.js';
+import Snackbar from 'react-native-snackbar';
+import ImageResizer from 'react-native-image-resizer';
+import * as Sentry from '@sentry/react-native';
 export default function ReelView({navigation, route}) {
   const width = Dimensions.get('window').width;
   const db = firestore();
-  const {image, imagename} = route.params;
+  const {mediumImage, mediumImageName, originalImageName, originalImage} =
+    route.params;
   const user = useSelector(state => state.user.user);
+  const date = new Date();
+
   // get images of reels stored in reducers
   const reelimages = useSelector(state => state.reellistimages.reellistimages);
   const [flatRef, setFlatRef] = useState();
@@ -34,79 +40,137 @@ export default function ReelView({navigation, route}) {
   const [lastPosition, setLastPosition] = useState(false);
   const [startAfter, setstartAfter] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [act, setAct] = useState(false);
+
   // get details of reels stored in reducers
 
   const reeldata = useSelector(state => state.reeldata.reeldata);
   const [spinner, setSpinner] = useState(false);
 
   const currentUser = auth().currentUser;
-  const file = {
-    uri: image,
-    name: imagename,
-    type: 'image/png',
-  };
-  const options = {
-    keyPrefix: `uploads/${currentUser.uid}/`,
-    bucket: 'shotoclick',
-    region: 'ap-south-1',
-    accessKey: 'AKIAR77UFFI6JWKBCVUU',
-    secretKey: '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',
-    successActionStatus: 201,
-  };
-  const uploadImage = imageid => {
+  const uploadCloudImage = imageid => {
+    const mediumImageFile = {
+      uri: mediumImage,
+      name: mediumImageName,
+      type: 'image/png',
+    };
+    const originalImageFile = {
+      uri: originalImage,
+      name: originalImageName,
+      type: 'image/png',
+    };
+    const optionsForMedium = {
+      keyPrefix: `uploads/${currentUser.uid}/`,
+      bucket: 'shoto-resized-production',
+      region: 'ap-south-1',
+      accessKey: 'AKIAR77UFFI6JWKBCVUU',
+      secretKey: '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',
+      successActionStatus: 201,
+    };
+    const optionsForOriginal = {
+      keyPrefix: `uploads/${currentUser.uid}/`,
+      bucket: 'shotoclick',
+      region: 'ap-south-1',
+      accessKey: 'AKIAR77UFFI6JWKBCVUU',
+      secretKey: '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',
+      successActionStatus: 201,
+    };
     let uploadToS3Ref = db
       .collection('reels')
       .doc(reeldata.reelid)
       .collection('reelimages')
       .doc(imageid);
-    RNS3.put(file, options)
+
+    let uploadS3ToUserReels = db
+      .collection('user_reels')
+      .doc(user.email)
+      .collection('AllUserPhotos');
+
+    // Uploading Medium Image
+    RNS3.put(mediumImageFile, optionsForMedium)
       .then(response => {
         if (response.status !== 201) {
           alert('Some error occurred');
         } else {
           try {
             uploadToS3Ref.update({
-              s3url: response.body.postResponse.location,
-              isUploaded: true,
+              cloudMediumImage: response.body.postResponse.location,
+              isUploadedMedium: true,
+            });
+            uploadS3ToUserReels.add({
+              cloudMediumImage: response.body.postResponse.location,
             });
           } catch (error) {
             uploadToS3Ref.update({
-              s3url: '',
-              isUploaded: false,
+              cloudMediumImage: '',
+              isUploadedMedium: false,
             });
+            Sentry.captureException(error.message);
           }
         }
       })
       .catch(error => {
         uploadToS3Ref.update({
-          s3url: '',
-          isUploaded: false,
+          cloudMediumImage: '',
+          isUploadedMedium: false,
         });
-        console.log(error.message);
+        Sentry.captureException(error.message);
+      });
+
+    //Uploading Original Image
+    RNS3.put(originalImageFile, optionsForOriginal)
+      .then(response => {
+        if (response.status !== 201) {
+          alert('Some error occurred');
+        } else {
+          try {
+            uploadToS3Ref.update({
+              cloudOriginalImage: response.body.postResponse.location,
+              isUploadOriginal: true,
+            });
+          } catch (error) {
+            uploadToS3Ref.update({
+              cloudOriginalImage: '',
+              isUploadOriginal: false,
+            });
+            Sentry.captureException(error.message);
+          }
+        }
+      })
+      .catch(error => {
+        uploadToS3Ref.update({
+          cloudOriginalImage: '',
+          isUploadOriginal: false,
+        });
+        Sentry.captureException(error.message);
       });
   };
+
   const uploadLocalImage = () => {
     const data = {
       uploadedby: user.email,
       uploaderpropic: user.profilepic,
       timestamp: new Date(),
       uploadername: user.username,
-      isUploaded: false,
-      localimage: image,
+      localMediumImage: mediumImage,
+      localOriginalImage: originalImage,
+      isUploadedMedium: false,
+      isUploadOriginal: false,
+      date: date.getHours() + ':' + date.getMinutes(),
     };
     let newImageCollection = db
       .collection('reels')
       .doc(reeldata.reelid)
       .collection('reelimages');
     newImageCollection.add(data).then(res => {
-      uploadImage(res.id);
+      uploadCloudImage(res.id);
     });
   };
   useEffect(() => {
-    if (image) {
+    if (mediumImage) {
       uploadLocalImage();
     }
-  }, [image]);
+  }, [mediumImage]);
   useFocusEffect(
     React.useCallback(() => {
       const onBackPress = () => {
@@ -211,11 +275,12 @@ export default function ReelView({navigation, route}) {
       return unsubscribe;
     }
   };
+
   const renderImage = useCallback(({item, index}) => {
     if (
-      (item.reelimages?.isUploaded === false &&
+      (item.reelimages?.isUploadedMedium === false &&
         item.reelimages?.uploadedby === user.email) ||
-      item.reelimages?.isUploaded === true
+      item.reelimages?.isUploadedMedium === true
     ) {
       return (
         <Imagecard
@@ -224,36 +289,42 @@ export default function ReelView({navigation, route}) {
             item.reelimages?.noofcomments ? item.reelimages.noofcomments : 0
           }
           imageid={item.id}
-          uploaderid={item.reelimages?.uploadedby}
           reelid={reeldata.reelid}
           navigation={navigation}
           t={new Date(item.reelimages?.timestamp.seconds * 1000).toUTCString()}
           uploadername={item.reelimages?.uploadername}
+          uploaderid={item.reelimages?.uploadedby}
           useremail={reeldata.useremail}
           profilepic={item.reelimages?.uploaderpropic}
-          time={item.reelimages?.time}
-          localimage={item.reelimages?.localimage}
-          s3url={item.reelimages?.s3url}
-          isUploaded={item.reelimages?.isUploaded}
-          file={file}
-          options={options}
+          time={item.reelimages?.timestamp}
+          localMediumImage={item.reelimages?.localMediumImage}
+          cloudMediumImage={item.reelimages?.cloudMediumImage}
+          localOriginalImage={item.reelimages?.localOriginalImage}
+          cloudOriginalImage={item.reelimages?.cloudOriginalImage}
+          isUploadedMedium={item.reelimages?.isUploadedMedium}
+          retryUploadCloudImage={retryUploadCloudImage}
           db={db}
+          d={item.reelimages?.date}
+          SnackBarComponent={SnackBarComponent}
+          navigation={navigation}
+          act={act}
+          setAct={setAct}
         />
       );
     }
   }, []);
   const renderThumbnail = useCallback(({item, index}) => {
     if (
-      (item.reelimages?.isUploaded === false &&
+      (item.reelimages?.isUploadedMedium === false &&
         item.reelimages?.uploadedby === user.email) ||
-      item.reelimages?.isUploaded === true
+      item.reelimages?.isUploadedMedium === true
     ) {
       return (
         <Thumbnail
           index={index}
-          localimage={item.reelimages?.localimage}
-          s3url={item.reelimages?.s3url}
-          isUploaded={item.reelimages?.isUploaded}
+          isUploadedMedium={item.reelimages?.isUploadedMedium}
+          localMediumImage={item.reelimages?.localMediumImage}
+          cloudMediumImage={item.reelimages?.cloudMediumImage}
         />
       );
     }
@@ -263,12 +334,147 @@ export default function ReelView({navigation, route}) {
       width: 300,
       height: 400,
     }).then(image => {
-      dispatch(setindex(0));
-      navigation.navigate('ReelView', {
-        image: image.path,
-        imagename: image.path.replace(/^.*[\\\/]/, ''),
-      });
+      ImageResizer.createResizedImage(
+        image.path,
+        640,
+        640,
+        'JPEG',
+        95,
+        0,
+        null,
+        false,
+        {mode: 'cover'},
+      )
+        .then(response => {
+          navigation.navigate('ReelView', {
+            mediumImage: response.uri,
+            originalImage: image.path,
+            mediumImageName: response.name,
+            originalImageName: image.path.replace(/^.*[\\\/]/, ''),
+          });
+        })
+        .catch(error => {
+          Sentry.captureException(error.message);
+          SnackBarComponent('Please try again');
+        });
     });
+  };
+  const SnackBarComponent = message => {
+    return Snackbar.show({
+      text: message,
+      duration: Snackbar.LENGTH_SHORT,
+    });
+  };
+  const retryUploadCloudImage = (
+    localMediumImage,
+    localOriginalImage,
+    imageid,
+  ) => {
+    setAct(true);
+    const mediumImageFile = {
+      uri: localMediumImage,
+      name: localMediumImage?.replace(/^.*[\\\/]/, ''),
+      type: 'image/png',
+    };
+    const originalImageFile = {
+      uri: localOriginalImage,
+      name: localOriginalImage?.replace(/^.*[\\\/]/, ''),
+      type: 'image/png',
+    };
+
+    const optionsForMedium = {
+      keyPrefix: `uploads/${currentUser.uid}/`,
+      bucket: 'shoto-resized-production',
+      region: 'ap-south-1',
+      accessKey: 'AKIAR77UFFI6JWKBCVUU',
+      secretKey: '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',
+      successActionStatus: 201,
+    };
+    const optionsForOriginal = {
+      keyPrefix: `uploads/${currentUser.uid}/`,
+      bucket: 'shotoclick',
+      region: 'ap-south-1',
+      accessKey: 'AKIAR77UFFI6JWKBCVUU',
+      secretKey: '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',
+      successActionStatus: 201,
+    };
+    let uploadToS3Ref = db
+      .collection('reels')
+      .doc(reeldata.reelid)
+      .collection('reelimages')
+      .doc(imageid);
+
+    let uploadS3ToUserReels = db
+      .collection('user_reels')
+      .doc(user.email)
+      .collection('AllUserPhotos');
+
+    // Uploading Medium Image
+    RNS3.put(mediumImageFile, optionsForMedium)
+      .then(response => {
+        if (response.status !== 201) {
+          alert('Some error occurred');
+          setAct(false);
+        } else {
+          try {
+            uploadToS3Ref.update({
+              cloudMediumImage: response.body.postResponse.location,
+              isUploadedMedium: true,
+            });
+            uploadS3ToUserReels.add({
+              cloudMediumImage: response.body.postResponse.location,
+            });
+            setAct(false);
+          } catch (error) {
+            uploadToS3Ref.update({
+              cloudMediumImage: '',
+              isUploadedMedium: false,
+            });
+            setAct(false);
+            Sentry.captureException(error.message);
+          }
+        }
+      })
+      .catch(error => {
+        uploadToS3Ref.update({
+          cloudMediumImage: '',
+          isUploadedMedium: false,
+        });
+        setAct(false);
+        Sentry.captureException(error.message);
+      });
+
+    //Uploading Original Image
+    RNS3.put(originalImageFile, optionsForOriginal)
+      .then(response => {
+        if (response.status !== 201) {
+          alert('Some error occurred');
+          setAct(false);
+        } else {
+          try {
+            uploadToS3Ref.update({
+              cloudOriginalImage: response.body.postResponse.location,
+              isUploadOriginal: true,
+            });
+            setAct(false);
+          } catch (error) {
+            uploadToS3Ref.update({
+              cloudOriginalImage: '',
+              isUploadOriginal: false,
+            });
+            setAct(false);
+            Sentry.captureException(error.message);
+          }
+        }
+      })
+      .catch(error => {
+        uploadToS3Ref.update({
+          cloudOriginalImage: '',
+          isUploadOriginal: false,
+        });
+        setAct(false);
+        Sentry.captureException(error.message);
+      });
   };
 
   return (

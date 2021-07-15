@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React from 'react';
 import {View, StyleSheet, Text} from 'react-native';
 import {Octicons, MaterialCommunityIcons} from '../Styles/Icons';
 import {TouchableOpacity} from 'react-native';
@@ -7,86 +7,51 @@ import FastImage from 'react-native-fast-image';
 import {createImageProgress} from 'react-native-image-progress';
 import ProgressBar from 'react-native-progress/Bar';
 import {ActivityIndicator} from 'react-native';
-import {RNS3} from 'react-native-aws3';
 export default function imagecard({
   navigation,
   uploadername,
   reelid,
   imageid,
-  uploaderid,
   useremail,
   comments,
   t,
-  s3url,
+  cloudMediumImage,
   profilepic,
-  time,
+  d,
   containerStyle,
-  localimage,
-  isUploaded,
-  options,
-  db,
+  localMediumImage,
+  isUploadedMedium,
+  localOriginalImage,
+  cloudOriginalImage,
+  uploaderid,
+  act,
+  setAct,
+  retryUploadCloudImage,
 }) {
   const Image = createImageProgress(FastImage);
-  const [act, setAct] = useState(false);
-
-  const file = {
-    uri: localimage,
-    name: localimage.replace(/^.*[\\\/]/, ''),
-    type: 'image/png',
-  };
 
   const goToImageView = () => {
     navigation.navigate('ImageView', {
       reelid: reelid,
-      imageurl: isUploaded ? s3url : localimage,
+      imageurl: isUploadedMedium ? cloudMediumImage : localMediumImage,
       uploadername: uploadername,
       uploaderid: uploaderid,
       imageid: imageid,
       useremail: useremail,
       t: t,
+      cloudOriginalImage: isUploadedMedium
+        ? cloudOriginalImage
+        : localOriginalImage,
+      d: d,
     });
-  };
-  const retryUpload = () => {
-    setAct(true);
-    let uploadToS3Ref = db
-      .collection('reels')
-      .doc(reelid)
-      .collection('reelimages')
-      .doc(imageid);
-    RNS3.put(file, options)
-      .then(response => {
-        if (response.status !== 201) {
-          alert('Some error occurred');
-          setAct(false);
-        } else {
-          try {
-            uploadToS3Ref.update({
-              s3url: response.body.postResponse.location,
-              isUploaded: true,
-            });
-            setAct(false);
-          } catch (error) {
-            uploadToS3Ref.update({
-              s3url: '',
-              isUploaded: false,
-            });
-            setAct(false);
-          }
-        }
-      })
-      .catch(error => {
-        uploadToS3Ref.update({
-          s3url: '',
-          isUploaded: false,
-        });
-        alert('please check your internet connection or retry');
-        setAct(false);
-      });
   };
 
   return (
-    <View style={[styles.container, containerStyle]}>
-      <TouchableOpacity activeOpacity={0.8} onPress={goToImageView}>
+    <TouchableOpacity
+      activeOpacity={0.8}
+      onPress={goToImageView}
+      style={[styles.container, containerStyle]}>
+      <View>
         <Image
           indicator={ProgressBar}
           indicatorProps={{
@@ -98,43 +63,64 @@ export default function imagecard({
           resizeMode="cover"
           style={styles.image}
           source={{
-            uri: isUploaded ? s3url : localimage,
+            uri: isUploadedMedium ? cloudMediumImage : localMediumImage,
           }}
         />
-      </TouchableOpacity>
+      </View>
 
       <View style={styles.cardInfo}>
         <CreatorBadge
           profilePic={profilepic}
           uploaderName={uploadername}
           dateTime={t}
-          time={time}
+          d={d}
         />
         <CommentBadge comments={comments} />
       </View>
-      {s3url === '' || (isUploaded === false && !s3url) ? (
-        <Retry retryUpload={retryUpload} act={act} />
+      {cloudMediumImage === '' ||
+      (isUploadedMedium === false && !cloudMediumImage) ? (
+        <Retry
+          retryUploadCloudImage={retryUploadCloudImage}
+          act={act}
+          localMediumImage={localMediumImage}
+          localOriginalImage={localOriginalImage}
+          imageid={imageid}
+        />
       ) : (
         <View />
       )}
-    </View>
+    </TouchableOpacity>
   );
 }
 
-const Retry = ({retryUpload, act}) => {
+const Retry = ({
+  retryUploadCloudImage,
+  act,
+  localMediumImage,
+  localOriginalImage,
+  imageid,
+}) => {
   return (
-    <View style={styles.retry}>
-      {act ? (
-        <ActivityIndicator color="rgba(200, 200, 200, 0.9)" />
-      ) : (
-        <MaterialCommunityIcons
-          onPress={retryUpload}
-          name="cloud-upload-outline"
-          color="rgba(200, 200, 200, 0.9)"
-          size={28}
-          style={{marginBottom: 3}}
-        />
-      )}
+    <View style={styles.retryView}>
+      <View style={styles.retry}>
+        {act ? (
+          <ActivityIndicator color="rgba(200, 200, 200, 0.9)" />
+        ) : (
+          <MaterialCommunityIcons
+            onPress={() => {
+              retryUploadCloudImage(
+                localMediumImage,
+                localOriginalImage,
+                imageid,
+              );
+            }}
+            name="cloud-upload-outline"
+            color="rgba(200, 200, 200, 0.9)"
+            size={31}
+            style={{marginBottom: 3}}
+          />
+        )}
+      </View>
     </View>
   );
 };
@@ -152,7 +138,7 @@ const CommentBadge = ({comments}) => {
   );
 };
 
-const CreatorBadge = ({profilePic, uploaderName, dateTime, time}) => {
+const CreatorBadge = ({profilePic, uploaderName, dateTime, d}) => {
   return (
     <View style={styles.creatorBadge}>
       <Avatar
@@ -165,7 +151,10 @@ const CreatorBadge = ({profilePic, uploaderName, dateTime, time}) => {
         <Text style={styles.creatorName}> {uploaderName} </Text>
         <Text style={styles.createdAt}>
           {' '}
-          {dateTime === 'Invalid Date' ? time : dateTime}{' '}
+          {dateTime.split(' ')[0]} {dateTime.split(' ')[1]}{' '}
+          {dateTime.split(' ')[2]} {dateTime.split(' ')[3]}
+          {'-'}
+          {d}
         </Text>
       </View>
     </View>
@@ -228,15 +217,19 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   retry: {
-    position: 'absolute',
-    top: 10,
-    left: 10,
-    zIndex: 1,
-    width: 40,
-    height: 40,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    width: 45,
+    height: 45,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     alignItems: 'center',
-    borderRadius: 40,
+    borderRadius: 45,
     justifyContent: 'center',
+  },
+  retryView: {
+    width: '100%',
+    height: 'auto',
+    aspectRatio: 3 / 2,
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

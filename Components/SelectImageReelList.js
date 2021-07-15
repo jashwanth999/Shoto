@@ -1,13 +1,11 @@
 import React, {useEffect, useState} from 'react';
 import {View, StyleSheet, Text, Image, TouchableOpacity} from 'react-native';
-
 import {MaterialIcons} from '../Styles/Icons.js';
 import {useDispatch} from 'react-redux';
-import {Addreeldata, setindex} from '../actions.js';
 import {useSelector} from 'react-redux';
 import firestore from '@react-native-firebase/firestore';
 
-export default function Reellist({navigation, name, id, t, image, imagename}) {
+export default function Reellist({name, id, t, upload}) {
   const db = firestore();
   const user = useSelector(state => state.user.user);
   const dispatch = useDispatch();
@@ -42,32 +40,22 @@ export default function Reellist({navigation, name, id, t, image, imagename}) {
     return unsubscribe;
   }, [id]);
 
-  const upload = () => {
-    dispatch(setindex(0));
-    navigation.navigate('ReelView', {
-      image: image,
-      imagename: imagename,
-    });
-    dispatch(
-      Addreeldata({
-        reelname: name,
-        reelid: id,
-      }),
-    );
-  };
-
   return (
     <TouchableOpacity
-      onPress={upload}
+      onPress={() => {
+        upload(name, id);
+      }}
       activeOpacity={0.9}
       style={styles.reelContainer}>
       <View style={styles.top}>
         <Text style={styles.reelCardName}>{name}</Text>
         <View style={{flexDirection: 'row'}}>
           <Text style={styles.imageLengthText}>
-            {t.split(' ')[0]} {t.split(' ')[1]} {t.split(' ')[2]}-
+            {t.split(' ')[0]} {t.split(' ')[1]} {t.split(' ')[2]}{' '}
+            {t.split(' ')[3]}
+            {' - '}
+            {images.length} photos
           </Text>
-          <Text style={styles.imageLengthText}>{images.length} photos</Text>
         </View>
       </View>
       <View style={styles.bottom}>
@@ -78,7 +66,6 @@ export default function Reellist({navigation, name, id, t, image, imagename}) {
             name="chevron-right"
             color="rgba(36, 123, 160, 0.8)"
             size={20}
-            style={styles.saveIcon}
           />
         </View>
       </View>
@@ -153,11 +140,12 @@ const styles = StyleSheet.create({
     width: '100%',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: 15,
   },
   save: {
     flexDirection: 'row',
     alignItems: 'center',
-    margin: 15,
+    paddingVertical: 2,
   },
   saveButtonText: {
     color: 'rgba(36, 123, 160, 0.8)',

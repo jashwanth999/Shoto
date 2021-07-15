@@ -22,6 +22,7 @@ import {
   Adduser,
   reelNameAction,
   setChange,
+  setindex,
 } from '../actions.js';
 import {useFocusEffect} from '@react-navigation/native';
 import Footer from '../Screens/Footer.js';
@@ -29,6 +30,9 @@ import firestore from '@react-native-firebase/firestore';
 import StartingHomePage from './StartingHomePage.js';
 import ImagePicker from 'react-native-image-crop-picker';
 import {Overlay} from 'react-native-elements';
+import ImageResizer from 'react-native-image-resizer';
+import Snackbar from 'react-native-snackbar';
+import * as Sentry from '@sentry/react-native';
 const wait = timeout => {
   return new Promise(resolve => setTimeout(resolve, timeout));
 };
@@ -212,13 +216,12 @@ export default function ShotoHome({navigation}) {
           name={item.reellist?.reelname}
           navigation={navigation}
           t={new Date(item.reellist?.timestamp?.seconds * 1000).toUTCString()}
+          ClickaPic={ClickaPic}
+          setReel={setReel}
         />
       );
     }
   });
-  const mainButton = () => {
-    alert('bt');
-  };
 
   //  list of all reel names of a user
 
@@ -275,7 +278,7 @@ export default function ShotoHome({navigation}) {
         dispatch(setChange(!changed));
       } catch (error) {
         toggleOverlay();
-        console.log(error.message);
+        Sentry.captureMessage(error);
       }
     } else {
       // if reelname already exist it alerts
@@ -293,15 +296,96 @@ export default function ShotoHome({navigation}) {
       height: 400,
     })
       .then(image => {
-        navigation.navigate('selectimagescreen', {
-          image: image.path,
-          imagename: image.path.replace(/^.*[\\\/]/, ''),
-        });
+        ImageResizer.createResizedImage(
+          image.path,
+          640,
+          640,
+          'JPEG',
+          95,
+          0,
+          null,
+          false,
+          {mode: 'cover'},
+        )
+          .then(response => {
+            //console.log(response);
+            navigation.navigate('selectimagescreen', {
+              mediumImage: response.uri,
+              originalImage: image.path,
+              mediumImageName: response.name,
+              originalImageName: image.path.replace(/^.*[\\\/]/, ''),
+            });
+
+            dispatch(setindex(0));
+          })
+          .catch(error => {
+            SnackBarComponent('Photo not uploaded please retry');
+          });
       })
       .catch(err => {
         // Here you handle if the user cancels or any other errors
         console.log('cancelled');
       });
+  };
+  const ClickaPic = (name, id) => {
+    ImagePicker.openCamera({
+      width: 300,
+      height: 400,
+    }).then(image => {
+      dispatch(
+        Addreeldata({
+          reelname: name,
+          reelid: id,
+        }),
+      );
+      ImageResizer.createResizedImage(
+        image.path,
+        640,
+        640,
+        'JPEG',
+        95,
+        0,
+        null,
+        false,
+        {mode: 'cover'},
+      )
+        .then(response => {
+          //console.log(response);
+          navigation.navigate('ReelView', {
+            mediumImage: response.uri,
+            originalImage: image.path,
+            mediumImageName: response.name,
+            originalImageName: image.path.replace(/^.*[\\\/]/, ''),
+          });
+
+          dispatch(setindex(0));
+        })
+        .catch(error => {
+          SnackBarComponent('Photo not uploaded please retry');
+        });
+    });
+  };
+  const setReel = (name, id) => {
+    // set reel details to reducers
+    dispatch(
+      Addreeldata({
+        reelname: name,
+        reelid: id,
+      }),
+    );
+    // navigating to reelview
+    navigation.navigate('ReelView', {
+      mediumImage: '',
+      originalImage: '',
+      mediumImageName: '',
+      originalImageName: '',
+    });
+  };
+  const SnackBarComponent = message => {
+    return Snackbar.show({
+      text: message,
+      duration: Snackbar.LENGTH_SHORT,
+    });
   };
 
   return (
@@ -360,7 +444,7 @@ export default function ShotoHome({navigation}) {
                 value={search}
                 onChangeText={text => setSearch(text)}
                 placeholderTextColor="grey"
-                style={styles.textinput}
+                style={styles.searchInput}
                 placeholder="Type Here"
               />
               <Ionicons
@@ -410,7 +494,6 @@ export default function ShotoHome({navigation}) {
         takePhoto={takePhoto}
         toggleOverlay={toggleOverlay}
         page="home"
-        
       />
       <Modal
         visible={visible}
@@ -422,6 +505,75 @@ export default function ShotoHome({navigation}) {
     </KeyboardAvoidingView>
   );
 }
+const SearchHeader = props => {
+  return (
+    <Header
+      containerStyle={{
+        backgroundColor: '#1d2533',
+        borderBottomColor: 'none',
+        height: 90,
+      }}
+      placement="left"
+      centerComponent={
+        <View style={styles.searchView}>
+          <TextInput
+            value={props.search}
+            onChangeText={text => props.setSearch(text)}
+            placeholderTextColor="grey"
+            style={styles.searchInput}
+            placeholder="Type Here"
+          />
+          <Ionicons
+            onPress={() => {
+              props.setIsSearch(!props.isSearch);
+              props.setSearch('');
+            }}
+            style={{paddingRight: 5}}
+            name="ios-close-outline"
+            color="#d4d4d4"
+            size={21}
+          />
+        </View>
+      }
+    />
+  );
+};
+const MainHeader = props => {
+  return (
+    <Header
+      containerStyle={{
+        backgroundColor: '#1d2533',
+        borderBottomColor: 'none',
+        height: 90,
+      }}
+      leftComponent={<Avatar rounded source={{uri: props.profilepic}} />}
+      centerComponent={
+        <View style={styles.headerView}>
+          <Text
+            style={{
+              color: '#d4d4d4',
+              fontSize: 16,
+              paddingTop: 10,
+              fontWeight: 'bold',
+            }}>
+            Shoto.Click
+          </Text>
+        </View>
+      }
+      rightComponent={
+        <MaterialIcons
+          onPress={() => {
+            props.setIsSearch(!props.isSearch);
+          }}
+          name="search"
+          style={{marginTop: 4}}
+          color="white"
+          size={26}
+        />
+      }
+    />
+  );
+};
 const Modal = props => {
   return (
     <Overlay
@@ -474,7 +626,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'black',
     flex: 1,
   },
-  textinput: {
+  searchInput: {
     width: '90%',
     paddingTop: 5,
     paddingLeft: 10,

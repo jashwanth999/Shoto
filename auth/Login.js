@@ -20,8 +20,10 @@ import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import firebase from '@react-native-firebase/app';
 import Snackbar from 'react-native-snackbar';
+import {ActivityIndicator} from 'react-native';
 export default function Login({navigation}) {
   // configure google singin OAuth client id
+  const [isLoading, setIsLoading] = useState(false);
 
   GoogleSignin.configure({
     scopes: [], // what API you want to access on behalf of the user, default is email and profile
@@ -92,15 +94,18 @@ export default function Login({navigation}) {
                 profilepic: googleUser.user.photo,
               })
               .then(() => {
+                setIsLoading(false);
                 navigation.navigate('Shotohome', {
                   email: googleUser.user.email,
                 });
               });
           })
           .catch(error => {
-            alert(error.message);
+            SnackBarComponent('Some Error occured please retry ');
+            setIsLoading(false);
           });
       } else {
+        setIsLoading(false);
         dispatch(Adduser({email: googleUser.user.email}));
         navigation.navigate('Shotohome');
       }
@@ -110,24 +115,23 @@ export default function Login({navigation}) {
   async function signInWithGoogleAsync() {
     try {
       await GoogleSignin.hasPlayServices();
-
       const userInfo = await GoogleSignin.signIn();
-      SnackBarComponent('Login Successfull');
 
       onSignIn(userInfo);
+      setIsLoading(true);
     } catch (error) {
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
         // user cancelled the login flow
-        SnackBarComponent('user cancelled the login flow');
+       // SnackBarComponent('Please check your internet connection and retry');
       } else if (error.code === statusCodes.IN_PROGRESS) {
         // operation (e.g. sign in) is in progress already
-        SnackBarComponent('in Progress');
+        SnackBarComponent('Please check your internet connection and retry');
       } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
         // play services not available or outdated
-        SnackBarComponent('play services not available or outdated');
+        SnackBarComponent('Please check your internet connection and retry');
       } else {
         // some other error happened
-        SnackBarComponent('Some  error happened');
+        SnackBarComponent('Please check your internet connection and retry');
       }
     }
   }
@@ -146,23 +150,32 @@ export default function Login({navigation}) {
           source={require('../assets/shoto.png')}
           style={styles.shotologo}
         />
-        <Text style={styles.shoto}>
-          Shotography: The Art of Clicking Together
-        </Text>
+        <Text style={styles.shoto}>Shotography:Clicking Together</Text>
+
         <TouchableOpacity
           activeOpacity={0.9}
           style={styles.button}
           onPress={signInWithGoogleAsync}>
-          <Image
-            source={require('../assets/google.png')}
-            style={styles.googlelogo}
-          />
-          <Text style={styles.text}>Login With Google</Text>
+          {isLoading ? (
+            <Loading />
+          ) : (
+            <View style={styles.button}>
+              <Image
+                source={require('../assets/google.png')}
+                style={styles.googlelogo}
+              />
+              <Text style={styles.text}>Login With Google</Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
     </View>
   );
 }
+const Loading = () => {
+  return <ActivityIndicator color="black" />;
+};
+
 const styles = StyleSheet.create({
   container: {
     display: 'flex',
