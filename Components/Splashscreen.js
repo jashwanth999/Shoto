@@ -3,6 +3,7 @@ import {View, StyleSheet, Image, StatusBar} from 'react-native';
 import {Adduser} from '../actions.js';
 import {useDispatch} from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Sentry from '@sentry/react-native';
 export default function Spashscreen({navigation}) {
   const dispatch = useDispatch();
   const _retrieveData = async () => {
@@ -10,17 +11,17 @@ export default function Spashscreen({navigation}) {
       // checking whether the user is login or not  using asynstorage
 
       const value = await AsyncStorage.getItem('email');
-
       if (value) {
         // if login already goes to home page
-
         navigation.navigate('Shotohome');
         dispatch(Adduser({email: value}));
       } else {
         // else goes to login page
         navigation.navigate('Login');
       }
-    } catch (error) {}
+    } catch (error) {
+      Sentry.captureMessage(error.message);
+    }
   };
   useEffect(() => {
     _retrieveData();

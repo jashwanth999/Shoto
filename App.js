@@ -1,5 +1,4 @@
 import React from 'react';
-import {StatusBar} from 'react-native';
 import StackNavigator from './Navigation/StackNavigator.js';
 import {NavigationContainer} from '@react-navigation/native';
 import {LogBox} from 'react-native';
@@ -35,7 +34,6 @@ export default function App() {
   return (
     <Provider store={store}>
       <NavigationContainer>
-        <StatusBar backgroundColor="#EA8BA5" />
         <StackNavigator />
       </NavigationContainer>
     </Provider>

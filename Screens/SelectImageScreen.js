@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {
   View,
   StyleSheet,
@@ -12,10 +12,14 @@ import {Header} from 'react-native-elements';
 import {Ionicons, MaterialIcons} from '../Styles/Icons';
 import SelectImageReelList from '../Components/SelectImageReelList';
 import firestore from '@react-native-firebase/firestore';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
+import {Addreeldata, setindex} from '../actions';
+import * as Sentry from '@sentry/react-native';
 export default function SelectImageScreen({navigation, route}) {
-  const {image, imagename} = route.params;
+  const {mediumImage, mediumImageName, originalImageName, originalImage} =
+    route.params;
   const db = firestore();
+  const dispatch = useDispatch();
   const user = useSelector(state => state.user.user);
   const [search, setSearch] = useState('');
   const [reels, setReels] = useState([]);
@@ -31,7 +35,9 @@ export default function SelectImageScreen({navigation, route}) {
         .orderBy('timestamp', 'desc')
         .limit(5)
         .get();
-    } catch (error) {}
+    } catch (error) {
+      Sentry.captureException(error.message);
+    }
   };
   const fetchReelListMore = async () => {
     try {
@@ -43,7 +49,9 @@ export default function SelectImageScreen({navigation, route}) {
         .startAfter(startAfter)
         .limit(5)
         .get();
-    } catch (error) {}
+    } catch (error) {
+      Sentry.captureException(error.message);
+    }
   };
   useEffect(() => {
     let mounted = true;
@@ -67,7 +75,6 @@ export default function SelectImageScreen({navigation, route}) {
       mounted = false;
     };
   }, [user?.email]);
-
   const loadMore = () => {
     fetchReelListMore().then(snapshot => {
       if (snapshot && !LastPosition) {
@@ -80,9 +87,7 @@ export default function SelectImageScreen({navigation, route}) {
         } else {
           setStartAfter(null);
         }
-
         setisLoading(true);
-
         setReels([
           ...reels,
           ...snapshot.docs.map(doc => ({
@@ -93,48 +98,45 @@ export default function SelectImageScreen({navigation, route}) {
       }
     });
   };
+  const renderReelList = useCallback(({item, index}) => {
+    if (item.reellist?.reelname.toLowerCase().includes(search.toLowerCase())) {
+      return (
+        <SelectImageReelList
+          id={item.id}
+          name={item.reellist?.reelname}
+          navigation={navigation}
+          t={new Date(item.reellist?.timestamp?.seconds * 1000).toUTCString()}
+          upload={upload}
+        />
+      );
+    }
+  });
+  const upload = (name, id) => {
+    dispatch(setindex(0));
+    navigation.navigate('ReelView', {
+      mediumImage: mediumImage,
+      mediumImageName: mediumImageName,
+      originalImage: originalImage,
+      originalImageName: originalImageName,
+    });
+    dispatch(
+      Addreeldata({
+        reelname: name,
+        reelid: id,
+      }),
+    );
+  };
   return (
     <View style={styles.container}>
       <HeaderComponent navigation={navigation} />
       <StatusBar backgroundColor="#1d2533" />
-      <View style={styles.searchView}>
-        <MaterialIcons
-          name="search"
-          style={{paddingLeft: 5}}
-          color="white"
-          size={26}
-        />
-        <TextInput
-          value={search}
-          onChangeText={text => setSearch(text)}
-          placeholderTextColor="grey"
-          style={styles.textinput}
-          placeholder="Type Here"
-        />
-      </View>
+      <SearchBar search={search} setSearch={setSearch} />
       {isLoading ? (
         <FlatList
           showsVerticalScrollIndicator={false}
           data={reels}
           initialNumToRender={5}
-          renderItem={({item}) =>
-            item.reellist?.reelname
-              .toLowerCase()
-              .includes(search.toLowerCase()) ? (
-              <SelectImageReelList
-                id={item.id}
-                name={item.reellist?.reelname}
-                navigation={navigation}
-                t={new Date(
-                  item.reellist?.timestamp.seconds * 1000,
-                ).toUTCString()}
-                image={image}
-                imagename={imagename}
-              />
-            ) : (
-              <View></View>
-            )
-          }
+          renderItem={renderReelList}
           keyExtractor={item => item.id}
           onEndReached={loadMore}
           onEndReachedThreshold={5}
@@ -180,6 +182,25 @@ const HeaderComponent = ({navigation}) => {
         </View>
       }
     />
+  );
+};
+const SearchBar = props => {
+  return (
+    <View style={styles.searchView}>
+      <MaterialIcons
+        name="search"
+        style={{paddingLeft: 5}}
+        color="white"
+        size={26}
+      />
+      <TextInput
+        value={props.search}
+        onChangeText={text => props.setSearch(text)}
+        placeholderTextColor="grey"
+        style={styles.textinput}
+        placeholder="Type Here"
+      />
+    </View>
   );
 };
 const LoadingView = () => {

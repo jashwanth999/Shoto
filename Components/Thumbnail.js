@@ -4,7 +4,12 @@ import {useDispatch} from 'react-redux';
 import {setindex} from '../actions';
 import FastImage from 'react-native-fast-image';
 import {createImageProgress} from 'react-native-image-progress';
-export default function Thumbnail({index, s3url, localimage, isUploaded}) {
+export default function Thumbnail({
+  index,
+  cloudMediumImage,
+  localMediumImage,
+  isUploadedMedium,
+}) {
   const dispatch = useDispatch();
   const scroll = () => {
     // storing index in reducers for onClick scroll to image
@@ -23,7 +28,7 @@ export default function Thumbnail({index, s3url, localimage, isUploaded}) {
           }}
           style={styles.thumbnailImage}
           source={{
-            uri: isUploaded ? s3url : localimage,
+            uri: isUploadedMedium ? cloudMediumImage : localMediumImage,
           }}
         />
       </TouchableOpacity>

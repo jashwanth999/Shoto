@@ -1,17 +1,15 @@
 import React, {useEffect, useState} from 'react';
 import {View, StyleSheet, Text, TouchableOpacity} from 'react-native';
 import {MaterialIcons} from '../Styles/Icons.js';
-import {useDispatch, useSelector} from 'react-redux';
-import {Addreeldata, setindex} from '../actions.js';
+import {useSelector} from 'react-redux';
 import FastImage from 'react-native-fast-image';
-import ImagePicker from 'react-native-image-crop-picker';
 import firestore from '@react-native-firebase/firestore';
 import {createImageProgress} from 'react-native-image-progress';
 import ProgressBar from 'react-native-progress/Bar';
 
-export default function Reellist({navigation, name, id, t}) {
+export default function Reellist({name, id, t, setReel, ClickaPic}) {
   const db = firestore();
-  const dispatch = useDispatch();
+  // const dispatch = useDispatch();
   const [reelusers, setreelusers] = useState([]);
   const [images, setimages] = useState([]);
   const user = useSelector(state => state.user.user);
@@ -45,59 +43,22 @@ export default function Reellist({navigation, name, id, t}) {
       });
     return unsubscribe;
   }, [id]);
-  var today = new Date();
-  today =
-    parseInt(today.getMonth() + 1) +
-    ' ' +
-    today.getDate() +
-    ' ' +
-    today.getHours() +
-    ':' +
-    today.getMinutes();
-
-  const setReel = () => {
-    // set reel details to reducers
-    dispatch(
-      Addreeldata({
-        reelname: name,
-        reelid: id,
-        imageslength: images.length,
-      }),
-    );
-    // navigating to reelview
-    navigation.navigate('ReelView', {
-      image: '',
-      imagename: '',
-    });
-  };
-  const ClickaPic = () => {
-    ImagePicker.openCamera({
-      width: 300,
-      height: 400,
-    }).then(image => {
-      dispatch(
-        Addreeldata({
-          reelname: name,
-          reelid: id,
-        }),
-      );
-      navigation.navigate('ReelView', {
-        image: image.path,
-        imagename: image.path.replace(/^.*[\\\/]/, ''),
-      });
-      dispatch(setindex(0));
-    });
-  };
 
   return (
     <View style={[styles.container]}>
-      <TouchableOpacity activeOpacity={0.8} onPress={setReel}>
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={() => {
+          setReel(name, id);
+        }}>
         {/* The upper part of the card leads to the reel screen */}
         <View style={styles.titleContainer}>
           <Text style={styles.titleText}>{name}</Text>
 
           <Text style={styles.infoText}>
-            {t.split(' ')[0]} {t.split(' ')[1]} {t.split(' ')[2]} {' - '}
+            {t.split(' ')[0]} {t.split(' ')[1]} {t.split(' ')[2]}{' '}
+            {t.split(' ')[3]}
+            {' - '}
             {images.length} photos
           </Text>
         </View>
@@ -105,17 +66,17 @@ export default function Reellist({navigation, name, id, t}) {
         <View style={styles.thumbnailsContainer}>
           {images.slice(0, 4).map((item, index) => {
             if (
-              (item.reelimages?.isUploaded === false &&
+              (item.reelimages?.isUploadedMedium === false &&
                 item.reelimages?.uploadedby === user.email) ||
-              item.reelimages?.isUploaded === true
+              item.reelimages?.isUploadedMedium === true
             ) {
               return (
                 <ImageThumbnail
                   key={index}
                   imageUri={
-                    item.reelimages?.isUploaded
-                      ? item.reelimages?.s3url
-                      : item.reelimages?.localimage
+                    item.reelimages?.isUploadedMedium
+                      ? item.reelimages?.cloudMediumImage
+                      : item.reelimages?.localMediumImage
                   }
                 />
               );
@@ -127,7 +88,11 @@ export default function Reellist({navigation, name, id, t}) {
       <View style={styles.bottomContainer}>
         <ContributorsPics reelUsers={reelusers} />
 
-        <TouchableOpacity onPress={ClickaPic} style={styles.clickaPicButton}>
+        <TouchableOpacity
+          onPress={() => {
+            ClickaPic(name, id);
+          }}
+          style={styles.clickaPicButton}>
           <Text style={styles.clickaPicButtonText}>CLICK</Text>
           <MaterialIcons
             name="chevron-right"
