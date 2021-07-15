@@ -25,7 +25,7 @@ export default function imagecard({
   cloudOriginalImage,
   uploaderid,
   act,
-  setAct,
+
   retryUploadCloudImage,
 }) {
   const Image = createImageProgress(FastImage);

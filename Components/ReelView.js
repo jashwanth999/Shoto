@@ -106,6 +106,9 @@ export default function ReelView({navigation, route}) {
               isUploadedMedium: false,
             });
             Sentry.captureException(error.message);
+            SnackBarComponent(
+              'Please check your internet connection and retry',
+            );
           }
         }
       })
@@ -115,6 +118,7 @@ export default function ReelView({navigation, route}) {
           isUploadedMedium: false,
         });
         Sentry.captureException(error.message);
+        SnackBarComponent('Please check your internet connection and retry');
       });
 
     //Uploading Original Image
@@ -134,6 +138,9 @@ export default function ReelView({navigation, route}) {
               isUploadOriginal: false,
             });
             Sentry.captureException(error.message);
+            SnackBarComponent(
+              'Please check your internet connection and retry',
+            );
           }
         }
       })
@@ -143,6 +150,7 @@ export default function ReelView({navigation, route}) {
           isUploadOriginal: false,
         });
         Sentry.captureException(error.message);
+        SnackBarComponent('Please check your internet connection and retry');
       });
   };
 
@@ -432,6 +440,9 @@ export default function ReelView({navigation, route}) {
             });
             setAct(false);
             Sentry.captureException(error.message);
+            SnackBarComponent(
+              'Please check your internet connection and retry',
+            );
           }
         }
       })
@@ -442,6 +453,7 @@ export default function ReelView({navigation, route}) {
         });
         setAct(false);
         Sentry.captureException(error.message);
+        SnackBarComponent('Please check your internet connection and retry');
       });
 
     //Uploading Original Image
@@ -464,6 +476,9 @@ export default function ReelView({navigation, route}) {
             });
             setAct(false);
             Sentry.captureException(error.message);
+            SnackBarComponent(
+              'Please check your internet connection and retry',
+            );
           }
         }
       })
@@ -474,6 +489,7 @@ export default function ReelView({navigation, route}) {
         });
         setAct(false);
         Sentry.captureException(error.message);
+        SnackBarComponent('Please check your internet connection and retry');
       });
   };
 
