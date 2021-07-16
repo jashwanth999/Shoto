@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {View, StyleSheet, Text} from 'react-native';
 import {Octicons, MaterialCommunityIcons} from '../Styles/Icons';
 import {TouchableOpacity} from 'react-native';
@@ -7,6 +7,12 @@ import FastImage from 'react-native-fast-image';
 import {createImageProgress} from 'react-native-image-progress';
 import ProgressBar from 'react-native-progress/Bar';
 import {ActivityIndicator} from 'react-native';
+import {RNS3} from 'react-native-aws3';
+import {useSelector} from 'react-redux';
+import * as Sentry from '@sentry/react-native';
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
+
 export default function imagecard({
   navigation,
   uploadername,
@@ -24,12 +30,14 @@ export default function imagecard({
   localOriginalImage,
   cloudOriginalImage,
   uploaderid,
-  act,
-
-  retryUploadCloudImage,
+  SnackBarComponent,
 }) {
   const Image = createImageProgress(FastImage);
-
+  const [act, setAct] = useState(false);
+  const user = useSelector(state => state.user.user);
+  const reeldata = useSelector(state => state.reeldata.reeldata);
+  const currentUser = auth().currentUser;
+  const db = firestore();
   const goToImageView = () => {
     navigation.navigate('ImageView', {
       reelid: reelid,
@@ -44,6 +52,125 @@ export default function imagecard({
         : localOriginalImage,
       d: d,
     });
+  };
+  const retryUploadCloudImage = () => {
+    setAct(true);
+
+    const mediumImageFile = {
+      uri: localMediumImage,
+      name: localMediumImage?.replace(/^.*[\\\/]/, ''),
+      type: 'image/png',
+    };
+    const originalImageFile = {
+      uri: localOriginalImage,
+      name: localOriginalImage?.replace(/^.*[\\\/]/, ''),
+      type: 'image/png',
+    };
+
+    const optionsForMedium = {
+      keyPrefix: `uploads/${currentUser.uid}/`,
+      bucket: 'shoto-resized-production',
+      region: 'ap-south-1',
+      accessKey: 'AKIAR77UFFI6JWKBCVUU',
+      secretKey: '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',
+      successActionStatus: 201,
+    };
+    const optionsForOriginal = {
+      keyPrefix: `uploads/${currentUser.uid}/`,
+      bucket: 'shotoclick',
+      region: 'ap-south-1',
+      accessKey: 'AKIAR77UFFI6JWKBCVUU',
+      secretKey: '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',
+      successActionStatus: 201,
+    };
+    let uploadToS3Ref = db
+      .collection('reels')
+      .doc(reeldata.reelid)
+      .collection('reelimages')
+      .doc(imageid);
+
+    let uploadS3ToUserReels = db
+      .collection('user_reels')
+      .doc(user.email)
+      .collection('AllUserPhotos')
+      .doc(imageid);
+
+    // Uploading Medium Image
+    RNS3.put(mediumImageFile, optionsForMedium)
+      .then(response => {
+        if (response.status !== 201) {
+          setAct(false);
+          SnackBarComponent('Please check your internet connection and retry');
+        } else {
+          try {
+            uploadToS3Ref.update({
+              cloudMediumImage: response.body.postResponse.location,
+              isUploadedMedium: true,
+            });
+            uploadS3ToUserReels.set({
+              cloudOriginalImage: response.body.postResponse.location,
+            });
+            setAct(false);
+          } catch (error) {
+            uploadToS3Ref.update({
+              cloudMediumImage: '',
+              isUploadedMedium: false,
+            });
+            setAct(false);
+            Sentry.captureException(error.message);
+            SnackBarComponent(
+              'Please check your internet connection and retry',
+            );
+          }
+        }
+      })
+      .catch(error => {
+        uploadToS3Ref.update({
+          cloudMediumImage: '',
+          isUploadedMedium: false,
+        });
+        setAct(false);
+        Sentry.captureException(error.message);
+        SnackBarComponent('Please check your internet connection and retry');
+      });
+
+    //Uploading Original Image
+    RNS3.put(originalImageFile, optionsForOriginal)
+      .then(response => {
+        if (response.status !== 201) {
+          alert('Some error occurred');
+          SnackBarComponent('Please check your internet connection and retry');
+          setAct(false);
+        } else {
+          try {
+            uploadToS3Ref.update({
+              cloudOriginalImage: response.body.postResponse.location,
+              isUploadOriginal: true,
+            });
+
+            setAct(false);
+          } catch (error) {
+            uploadToS3Ref.update({
+              cloudOriginalImage: '',
+              isUploadOriginal: false,
+            });
+            setAct(false);
+            Sentry.captureException(error.message);
+            SnackBarComponent(
+              'Please check your internet connection and retry',
+            );
+          }
+        }
+      })
+      .catch(error => {
+        uploadToS3Ref.update({
+          cloudOriginalImage: '',
+          isUploadOriginal: false,
+        });
+        setAct(false);
+        Sentry.captureException(error.message);
+        SnackBarComponent('Please check your internet connection and retry');
+      });
   };
 
   return (
@@ -93,30 +220,20 @@ export default function imagecard({
   );
 }
 
-const Retry = ({
-  retryUploadCloudImage,
-  act,
-  localMediumImage,
-  localOriginalImage,
-  imageid,
-}) => {
+const Retry = ({retryUploadCloudImage, act}) => {
   return (
     <View style={styles.retryView}>
       <View style={styles.retry}>
         {act ? (
-          <ActivityIndicator color="rgba(200, 200, 200, 0.9)" />
+          <ActivityIndicator color="#fff" />
         ) : (
           <MaterialCommunityIcons
             onPress={() => {
-              retryUploadCloudImage(
-                localMediumImage,
-                localOriginalImage,
-                imageid,
-              );
+              retryUploadCloudImage();
             }}
             name="cloud-upload-outline"
-            color="rgba(200, 200, 200, 0.9)"
-            size={31}
+            color="#fff"
+            size={34}
             style={{marginBottom: 3}}
           />
         )}
@@ -217,11 +334,11 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   retry: {
-    width: 45,
-    height: 45,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    width: 60,
+    height: 60,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     alignItems: 'center',
-    borderRadius: 45,
+    borderRadius: 60,
     justifyContent: 'center',
   },
   retryView: {
