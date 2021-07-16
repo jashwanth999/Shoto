@@ -40,7 +40,6 @@ export default function ReelView({navigation, route}) {
   const [lastPosition, setLastPosition] = useState(false);
   const [startAfter, setstartAfter] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [act, setAct] = useState(false);
 
   // get details of reels stored in reducers
 
@@ -84,20 +83,22 @@ export default function ReelView({navigation, route}) {
     let uploadS3ToUserReels = db
       .collection('user_reels')
       .doc(user.email)
-      .collection('AllUserPhotos');
+      .collection('AllUserPhotos')
+      .doc(imageid);
 
     // Uploading Medium Image
     RNS3.put(mediumImageFile, optionsForMedium)
       .then(response => {
         if (response.status !== 201) {
-          alert('Some error occurred');
+          SnackBarComponent('Please check your internet connection and retry');
         } else {
           try {
             uploadToS3Ref.update({
               cloudMediumImage: response.body.postResponse.location,
               isUploadedMedium: true,
             });
-            uploadS3ToUserReels.add({
+
+            uploadS3ToUserReels.set({
               cloudMediumImage: response.body.postResponse.location,
             });
           } catch (error) {
@@ -125,7 +126,7 @@ export default function ReelView({navigation, route}) {
     RNS3.put(originalImageFile, optionsForOriginal)
       .then(response => {
         if (response.status !== 201) {
-          alert('Some error occurred');
+          SnackBarComponent('Please check your internet connection and retry');
         } else {
           try {
             uploadToS3Ref.update({
@@ -310,13 +311,10 @@ export default function ReelView({navigation, route}) {
           localOriginalImage={item.reelimages?.localOriginalImage}
           cloudOriginalImage={item.reelimages?.cloudOriginalImage}
           isUploadedMedium={item.reelimages?.isUploadedMedium}
-          retryUploadCloudImage={retryUploadCloudImage}
           db={db}
           d={item.reelimages?.date}
           SnackBarComponent={SnackBarComponent}
           navigation={navigation}
-          act={act}
-          setAct={setAct}
         />
       );
     }
@@ -372,125 +370,6 @@ export default function ReelView({navigation, route}) {
       text: message,
       duration: Snackbar.LENGTH_SHORT,
     });
-  };
-  const retryUploadCloudImage = (
-    localMediumImage,
-    localOriginalImage,
-    imageid,
-  ) => {
-    setAct(true);
-    const mediumImageFile = {
-      uri: localMediumImage,
-      name: localMediumImage?.replace(/^.*[\\\/]/, ''),
-      type: 'image/png',
-    };
-    const originalImageFile = {
-      uri: localOriginalImage,
-      name: localOriginalImage?.replace(/^.*[\\\/]/, ''),
-      type: 'image/png',
-    };
-
-    const optionsForMedium = {
-      keyPrefix: `uploads/${currentUser.uid}/`,
-      bucket: 'shoto-resized-production',
-      region: 'ap-south-1',
-      accessKey: 'AKIAR77UFFI6JWKBCVUU',
-      secretKey: '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',
-      successActionStatus: 201,
-    };
-    const optionsForOriginal = {
-      keyPrefix: `uploads/${currentUser.uid}/`,
-      bucket: 'shotoclick',
-      region: 'ap-south-1',
-      accessKey: 'AKIAR77UFFI6JWKBCVUU',
-      secretKey: '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',
-      successActionStatus: 201,
-    };
-    let uploadToS3Ref = db
-      .collection('reels')
-      .doc(reeldata.reelid)
-      .collection('reelimages')
-      .doc(imageid);
-
-    let uploadS3ToUserReels = db
-      .collection('user_reels')
-      .doc(user.email)
-      .collection('AllUserPhotos');
-
-    // Uploading Medium Image
-    RNS3.put(mediumImageFile, optionsForMedium)
-      .then(response => {
-        if (response.status !== 201) {
-          alert('Some error occurred');
-          setAct(false);
-        } else {
-          try {
-            uploadToS3Ref.update({
-              cloudMediumImage: response.body.postResponse.location,
-              isUploadedMedium: true,
-            });
-            uploadS3ToUserReels.add({
-              cloudMediumImage: response.body.postResponse.location,
-            });
-            setAct(false);
-          } catch (error) {
-            uploadToS3Ref.update({
-              cloudMediumImage: '',
-              isUploadedMedium: false,
-            });
-            setAct(false);
-            Sentry.captureException(error.message);
-            SnackBarComponent(
-              'Please check your internet connection and retry',
-            );
-          }
-        }
-      })
-      .catch(error => {
-        uploadToS3Ref.update({
-          cloudMediumImage: '',
-          isUploadedMedium: false,
-        });
-        setAct(false);
-        Sentry.captureException(error.message);
-        SnackBarComponent('Please check your internet connection and retry');
-      });
-
-    //Uploading Original Image
-    RNS3.put(originalImageFile, optionsForOriginal)
-      .then(response => {
-        if (response.status !== 201) {
-          alert('Some error occurred');
-          setAct(false);
-        } else {
-          try {
-            uploadToS3Ref.update({
-              cloudOriginalImage: response.body.postResponse.location,
-              isUploadOriginal: true,
-            });
-            setAct(false);
-          } catch (error) {
-            uploadToS3Ref.update({
-              cloudOriginalImage: '',
-              isUploadOriginal: false,
-            });
-            setAct(false);
-            Sentry.captureException(error.message);
-            SnackBarComponent(
-              'Please check your internet connection and retry',
-            );
-          }
-        }
-      })
-      .catch(error => {
-        uploadToS3Ref.update({
-          cloudOriginalImage: '',
-          isUploadOriginal: false,
-        });
-        setAct(false);
-        Sentry.captureException(error.message);
-        SnackBarComponent('Please check your internet connection and retry');
-      });
   };
 
   return (

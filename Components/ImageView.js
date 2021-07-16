@@ -32,7 +32,6 @@ export default function ImageView({navigation, route}) {
   const [comment, setComment] = useState('');
   const dispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(false);
-  
 
   const submitcomment = () => {
     // sending comments to images which stored in reels -> reelimages

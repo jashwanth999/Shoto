@@ -55,7 +55,7 @@ export default function ShotoHome({navigation}) {
 
   const [LastPosition, setLastPosition] = useState(false);
 
-  const [data, setData] = useState([]);
+  
 
   const [search, setSearch] = useState('');
   const fetchReelList = async () => {
@@ -152,31 +152,12 @@ export default function ShotoHome({navigation}) {
             })),
           ),
         );
-        setData(
-          snapshot.docs.map(doc => ({
-            id: doc.id,
-            reellist: doc.data(),
-          })),
-        );
       });
     }
     return () => {
       mounted = false;
     };
   }, [refreshing, changed, user?.email]);
-
-  useEffect(() => {
-    if (user?.email) {
-      const unsubscribe = db
-        .collection('user_reels')
-        .doc(user.email)
-        .collection('reellist')
-        .orderBy('timestamp', 'desc')
-        .limit(5)
-        .onSnapshot({includeMetadataChanges: true}, snapshot => {});
-      return unsubscribe;
-    }
-  }, [user?.email]);
 
   const loadMoreReels = () => {
     if (user?.email && startAfter) {
@@ -197,13 +178,6 @@ export default function ShotoHome({navigation}) {
               })),
             ]),
           );
-          setData([
-            ...data,
-            ...snapshot.docs.map(doc => ({
-              id: doc.id,
-              reellist: doc.data(),
-            })),
-          ]);
         }
       });
     }
@@ -319,6 +293,7 @@ export default function ShotoHome({navigation}) {
             dispatch(setindex(0));
           })
           .catch(error => {
+            Sentry.captureException(error.message);
             SnackBarComponent('Photo not uploaded please retry');
           });
       })
@@ -361,6 +336,7 @@ export default function ShotoHome({navigation}) {
           dispatch(setindex(0));
         })
         .catch(error => {
+          Sentry.captureException(error.message);
           SnackBarComponent('Photo not uploaded please retry');
         });
     });
