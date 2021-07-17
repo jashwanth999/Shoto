@@ -1,17 +1,20 @@
 import React from 'react';
 import {createStackNavigator} from '@react-navigation/stack';
-import Login from '../auth/Login.js';
-import ShotoHome from '../Components/ShotoHome.js';
-import ReelView from '../Components/ReelView.js';
-import ImageView from '../Components/ImageView.js';
-import Splashscreen from '../Components/Splashscreen';
-import Adduserslist from '../Components/Addcontributors/Adduserslist.js';
-import Photoview from '../Components/Photoview.js';
+import Login from '../Screens/Login.js';
+import ShotoHome from '../Screens/ShotoHome.js';
+import ReelView from '../Screens/ReelView.js';
+import ImageView from '../Screens/ImageView.js';
+import Splashscreen from '../Screens/Splashscreen';
+import Adduserslist from '../Screens/Adduserslist.js';
+import Photoview from '../Screens/Photoview.js';
 import UserProfile from '../Screens/UserProfile.js';
 import SelectImageScreen from '../Screens/SelectImageScreen.js';
+import auth from '@react-native-firebase/auth';
 
 const Stack = createStackNavigator();
 export default function StackNavigator() {
+  const user = auth().currentUser;
+
   return (
     <Stack.Navigator
       screenOptions={{

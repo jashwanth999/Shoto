@@ -9,10 +9,10 @@ import {
   ScrollView,
 } from 'react-native';
 import {Header} from 'react-native-elements';
-import {Ionicons, MaterialCommunityIcons} from '../../Styles/Icons';
-import Userlist from './Userlist';
+import {Ionicons, MaterialCommunityIcons} from '../Styles/Icons';
+import Userlist from '../Components/Userlist';
 import {useSelector, useDispatch} from 'react-redux';
-import {reeluseremail} from '../../actions';
+import {reeluseremail} from '../actions';
 import firestore from '@react-native-firebase/firestore';
 import Snackbar from 'react-native-snackbar';
 import * as Sentry from '@sentry/react-native';

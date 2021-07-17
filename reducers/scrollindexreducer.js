@@ -1,10 +1,10 @@
-const initailState = {
+const initialState = {
   y: 0,
 };
-export const scrolltoindex = (state = initailState, action) => {
+export const scrolltoindex = (state = initialState, action) => {
   switch (action.type) {
-    case "SET_INDEX":
-      return { y: action.payload };
+    case 'SET_INDEX':
+      return {...state, y: action.payload};
     default:
       return state;
   }

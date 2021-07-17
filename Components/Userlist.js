@@ -1,8 +1,8 @@
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
 import {useSelector} from 'react-redux';
-import {Ionicons, MaterialCommunityIcons} from '../../Styles/Icons';
-
+import RemoveIcon from './UserListComponents/RemoveIcon';
+import AdminIcon from './UserListComponents/AdminIcon';
 export default function Userlist({useremail, deleteContributors, admin}) {
   const user = useSelector(state => state.user.user);
   return (
@@ -31,40 +31,7 @@ export default function Userlist({useremail, deleteContributors, admin}) {
     </View>
   );
 }
-const AdminIcon = ({deleteContributors, useremail, admin}) => {
-  if (admin === useremail) {
-    return (
-      <MaterialCommunityIcons
-        name="checkbox-blank-circle"
-        color="#d4d4d4"
-        size={18}
-        style={{paddingLeft: 10, paddingRight: 3}}
-        onPress={() => {
-          deleteContributors(useremail);
-        }}
-      />
-    );
-  } else {
-    return <View></View>;
-  }
-};
-const RemoveIcon = ({deleteContributors, useremail, admin, user}) => {
-  if (admin === user.email && admin !== useremail) {
-    return (
-      <Ionicons
-        style={styles.icon}
-        name="ios-close-outline"
-        color="#d4d4d4"
-        size={21}
-        onPress={() => {
-          deleteContributors(useremail);
-        }}
-      />
-    );
-  } else {
-    return <View></View>;
-  }
-};
+
 const styles = StyleSheet.create({
   container: {
     margin: 5,
@@ -84,7 +51,5 @@ const styles = StyleSheet.create({
     paddingBottom: 5,
     width: '90%',
   },
-  icon: {
-    paddingRight: 5,
-  },
+ 
 });

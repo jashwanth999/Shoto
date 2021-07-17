@@ -76,7 +76,7 @@ export default function Login({navigation}) {
         auth()
           .signInWithCredential(credential)
           .then(async authUser => {
-            await firestore()
+            firestore()
               .collection('users')
               .doc(googleUser.user.email)
               .set({
@@ -84,7 +84,8 @@ export default function Login({navigation}) {
                 email: googleUser.user.email,
                 profilepic: googleUser.user.photo,
                 timestamp: new Date(),
-              });
+              })
+              .catch(error => {});
             await AsyncStorage.setItem('email', googleUser.user.email);
             dispatch(Adduser({email: googleUser.user.email}));
             return authUser.user
@@ -122,7 +123,7 @@ export default function Login({navigation}) {
     } catch (error) {
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
         // user cancelled the login flow
-       // SnackBarComponent('Please check your internet connection and retry');
+        // SnackBarComponent('Please check your internet connection and retry');
       } else if (error.code === statusCodes.IN_PROGRESS) {
         // operation (e.g. sign in) is in progress already
         SnackBarComponent('Please check your internet connection and retry');

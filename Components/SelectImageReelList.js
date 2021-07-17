@@ -1,14 +1,13 @@
 import React, {useEffect, useState} from 'react';
-import {View, StyleSheet, Text, Image, TouchableOpacity} from 'react-native';
+import {View, StyleSheet, Text, TouchableOpacity} from 'react-native';
 import {MaterialIcons} from '../Styles/Icons.js';
-import {useDispatch} from 'react-redux';
 import {useSelector} from 'react-redux';
 import firestore from '@react-native-firebase/firestore';
-
+import ContributorsView from './ReelListComponents/ContributorsView.js';
 export default function Reellist({name, id, t, upload}) {
   const db = firestore();
   const user = useSelector(state => state.user.user);
-  const dispatch = useDispatch();
+  //const dispatch = useDispatch();
   const [reelUsers, setreelusers] = useState([]);
   const [images, setimages] = useState([]);
 
@@ -49,7 +48,7 @@ export default function Reellist({name, id, t, upload}) {
       style={styles.reelContainer}>
       <View style={styles.top}>
         <Text style={styles.reelCardName}>{name}</Text>
-        <View style={{flexDirection: 'row'}}>
+        <View style={styles.imagesTextView}>
           <Text style={styles.imageLengthText}>
             {t.split(' ')[0]} {t.split(' ')[1]} {t.split(' ')[2]}{' '}
             {t.split(' ')[3]}
@@ -72,43 +71,11 @@ export default function Reellist({name, id, t, upload}) {
     </TouchableOpacity>
   );
 }
-const ContributorsView = ({reelUsers}) => {
-  return (
-    <View style={styles.contributorsView}>
-      {reelUsers.map((users, index) => {
-        if (index < 3) {
-          return (
-            <Image
-              key={index}
-              source={{uri: users.profilepic}}
-              style={styles.contributorsAvatar}
-            />
-          );
-        }
-      })}
-      {reelUsers.length > 3 ? (
-        <View
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            marginLeft: 3,
-          }}>
-          <MaterialIcons name="add" color="white" size={13} />
-          <Text style={{color: 'white', marginRight: 10}}>
-            {reelUsers.length - 3}
-          </Text>
-        </View>
-      ) : (
-        <View></View>
-      )}
-    </View>
-  );
-};
+
 const styles = StyleSheet.create({
   reelContainer: {
     height: 110,
-    marginTop: 8,
+    marginVertical: 5,
     backgroundColor: 'rgba(14,14,14,1)',
     flexDirection: 'column',
   },
@@ -141,7 +108,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 15,
-    marginVertical: 5,
+    paddingVertical: 10,
   },
   save: {
     flexDirection: 'row',
@@ -158,5 +125,8 @@ const styles = StyleSheet.create({
   imageLengthText: {
     color: '#d4d4d4',
     fontSize: 12,
+  },
+  imagesTextView: {
+    flexDirection: 'row',
   },
 });

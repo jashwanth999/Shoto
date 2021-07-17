@@ -1,17 +1,25 @@
 import React, {useState} from 'react';
 import {View, StyleSheet, Text} from 'react-native';
-import {Octicons, MaterialCommunityIcons} from '../Styles/Icons';
 import {TouchableOpacity} from 'react-native';
-import {Avatar} from 'react-native-elements/dist/avatar/Avatar';
 import FastImage from 'react-native-fast-image';
 import {createImageProgress} from 'react-native-image-progress';
 import ProgressBar from 'react-native-progress/Bar';
-import {ActivityIndicator} from 'react-native';
 import {RNS3} from 'react-native-aws3';
 import {useSelector} from 'react-redux';
 import * as Sentry from '@sentry/react-native';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
+import {
+  ACCESSKEY,
+  BUCKETNAMEONE,
+  BUCKETNAMETWO,
+  kEYPREFIX,
+  REGION,
+  SECRETKEY,
+} from '../Security/Keys';
+import Retry from './ImageCardComponents.js/Retry';
+import CreatorBadge from './ImageCardComponents.js/CreatorBadge';
+import CommentBadge from './ImageCardComponents.js/CommentBadge';
 
 export default function imagecard({
   navigation,
@@ -220,64 +228,6 @@ export default function imagecard({
   );
 }
 
-const Retry = ({retryUploadCloudImage, act}) => {
-  return (
-    <View style={styles.retryView}>
-      <View style={styles.retry}>
-        {act ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <MaterialCommunityIcons
-            onPress={() => {
-              retryUploadCloudImage();
-            }}
-            name="cloud-upload-outline"
-            color="#fff"
-            size={34}
-            style={{marginBottom: 3}}
-          />
-        )}
-      </View>
-    </View>
-  );
-};
-const CommentBadge = ({comments}) => {
-  return (
-    <View style={styles.commentBadge}>
-      <Octicons
-        name="comment-discussion"
-        color="#d4d4d4"
-        size={20}
-        onPress={() => {}}
-      />
-      <Text style={styles.commentsCount}>{comments}</Text>
-    </View>
-  );
-};
-
-const CreatorBadge = ({profilePic, uploaderName, dateTime, d}) => {
-  return (
-    <View style={styles.creatorBadge}>
-      <Avatar
-        rounded
-        source={{
-          uri: profilePic,
-        }}
-      />
-      <View style={styles.userText}>
-        <Text style={styles.creatorName}> {uploaderName} </Text>
-        <Text style={styles.createdAt}>
-          {' '}
-          {dateTime.split(' ')[0]} {dateTime.split(' ')[1]}{' '}
-          {dateTime.split(' ')[2]} {dateTime.split(' ')[3]}
-          {'-'}
-          {d}
-        </Text>
-      </View>
-    </View>
-  );
-};
-
 const styles = StyleSheet.create({
   container: {
     backgroundColor: 'rgba(18,18,18,1)',
@@ -298,55 +248,5 @@ const styles = StyleSheet.create({
     flexWrap: 'nowrap',
     paddingHorizontal: 10,
     paddingVertical: 5,
-  },
-  creatorBadge: {
-    width: '70%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 5,
-  },
-  commentsCount: {
-    color: 'rgba(212,212,212,1)',
-    marginLeft: 5,
-  },
-  userText: {
-    width: 853,
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-    alignSelf: 'stretch',
-    margin: 5,
-  },
-  creatorName: {
-    color: 'rgba(212,212,212,1)',
-    textAlign: 'left',
-    fontSize: 12,
-    fontWeight: 'bold',
-    marginVertical: 2,
-  },
-  createdAt: {
-    color: 'rgba(212,212,212,1)',
-    fontSize: 10,
-    // marginVertical: 2,
-  },
-  commentBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-  },
-  retry: {
-    width: 60,
-    height: 60,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    alignItems: 'center',
-    borderRadius: 60,
-    justifyContent: 'center',
-  },
-  retryView: {
-    width: '100%',
-    height: 'auto',
-    aspectRatio: 3 / 2,
-    position: 'absolute',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 });

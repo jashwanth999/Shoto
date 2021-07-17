@@ -12,8 +12,8 @@ import {
 } from 'react-native';
 import {Header} from 'react-native-elements';
 import {Ionicons} from '../Styles/Icons.js';
-import Imagecard from './Imagecard.js';
-import Thumbnail from './Thumbnail.js';
+import Imagecard from '../Components/Imagecard.js';
+import Thumbnail from '../Components/Thumbnail.js';
 import {useSelector, useDispatch} from 'react-redux';
 import {Addreelimages, setindex} from '../actions.js';
 import firestore from '@react-native-firebase/firestore';
@@ -21,10 +21,18 @@ import auth from '@react-native-firebase/auth';
 import {useFocusEffect} from '@react-navigation/native';
 import {RNS3} from 'react-native-aws3';
 import ImagePicker from 'react-native-image-crop-picker';
-import Footer from '../Screens/Footer.js';
+import Footer from '../Components/Footer.js';
 import Snackbar from 'react-native-snackbar';
 import ImageResizer from 'react-native-image-resizer';
 import * as Sentry from '@sentry/react-native';
+import {
+  kEYPREFIX,
+  BUCKETNAMEONE,
+  BUCKETNAMETWO,
+  ACCESSKEY,
+  SECRETKEY,
+  REGION,
+} from '../Security/Keys.js';
 export default function ReelView({navigation, route}) {
   const width = Dimensions.get('window').width;
   const db = firestore();
@@ -47,6 +55,7 @@ export default function ReelView({navigation, route}) {
   const [spinner, setSpinner] = useState(false);
 
   const currentUser = auth().currentUser;
+
   const uploadCloudImage = imageid => {
     const mediumImageFile = {
       uri: mediumImage,
@@ -339,31 +348,33 @@ export default function ReelView({navigation, route}) {
     ImagePicker.openCamera({
       width: 300,
       height: 400,
-    }).then(image => {
-      ImageResizer.createResizedImage(
-        image.path,
-        640,
-        640,
-        'JPEG',
-        95,
-        0,
-        null,
-        false,
-        {mode: 'cover'},
-      )
-        .then(response => {
-          navigation.navigate('ReelView', {
-            mediumImage: response.uri,
-            originalImage: image.path,
-            mediumImageName: response.name,
-            originalImageName: image.path.replace(/^.*[\\\/]/, ''),
+    })
+      .then(image => {
+        ImageResizer.createResizedImage(
+          image.path,
+          640,
+          640,
+          'JPEG',
+          95,
+          0,
+          null,
+          false,
+          {mode: 'cover'},
+        )
+          .then(response => {
+            navigation.navigate('ReelView', {
+              mediumImage: response.uri,
+              originalImage: image.path,
+              mediumImageName: response.name,
+              originalImageName: image.path.replace(/^.*[\\\/]/, ''),
+            });
+          })
+          .catch(error => {
+            Sentry.captureException(error.message);
+            SnackBarComponent('Please try again');
           });
-        })
-        .catch(error => {
-          Sentry.captureException(error.message);
-          SnackBarComponent('Please try again');
-        });
-    });
+      })
+      .catch(error => {});
   };
   const SnackBarComponent = message => {
     return Snackbar.show({
