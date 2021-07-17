@@ -3,18 +3,20 @@ import {
   View,
   StyleSheet,
   ScrollView,
-  Text,
   TextInput,
   TouchableOpacity,
-  ActivityIndicator,
 } from 'react-native';
-import Comments from './Comments.js';
-import {Ionicons} from '../Styles/Icons.js';
+import Comments from '../Components/Comments.js';
+
 import {useSelector, useDispatch} from 'react-redux';
 import firestore from '@react-native-firebase/firestore';
 import {AddComments} from '../actions.js';
 import FastImage from 'react-native-fast-image';
 import * as Sentry from '@sentry/react-native';
+import BackButton from '../Components/ImageViewComponents/BackButton.js';
+import Divider from '../Components/ImageViewComponents/Divider.js';
+import TitleView from '../Components/ImageViewComponents/TitleView.js';
+import LoadingView from '../Components/ImageViewComponents/LoadingView.js';
 export default function ImageView({navigation, route}) {
   const user = useSelector(state => state.user.user);
   const {
@@ -60,7 +62,6 @@ export default function ImageView({navigation, route}) {
         });
     } catch (error) {
       Sentry.captureMessage(error);
-      
     }
     setComment('');
   };
@@ -95,7 +96,6 @@ export default function ImageView({navigation, route}) {
           activeOpacity={1}
           onPress={() =>
             navigation.navigate('Photoview', {
-              imageurl: imageurl,
               cloudOriginalImage: cloudOriginalImage,
             })
           }>
@@ -128,44 +128,7 @@ export default function ImageView({navigation, route}) {
     </View>
   );
 }
-const TitleView = ({uploadername, t, d}) => {
-  return (
-    <View style={styles.titleView}>
-      <Text style={styles.uploaderNameText}>{uploadername}</Text>
-      <Text style={styles.date}>
-        {' '}
-        {t.split(' ')[1]} {t.split(' ')[2]} {t.split(' ')[3]} {d}
-      </Text>
-    </View>
-  );
-};
-const BackButton = ({navigation}) => {
-  return (
-    <View style={styles.backButtonView}>
-      <Ionicons
-        onPress={() => {
-          navigation.goBack();
-        }}
-        name="md-chevron-back-circle-outline"
-        color="white"
-        style={{marginLeft: 3}}
-        size={35}
-      />
-    </View>
-  );
-};
-const Divider = () => {
-  return (
-    <View style={styles.dividerView}>
-      <View style={styles.divider}></View>
-    </View>
-  );
-};
-const LoadingView = () => {
-  return (
-    <ActivityIndicator size="small" color="white" style={{marginTop: 10}} />
-  );
-};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,

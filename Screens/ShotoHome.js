@@ -10,10 +10,9 @@ import {
   Platform,
   TextInput,
   Text,
-  TouchableOpacity,
 } from 'react-native';
 import {Header, Avatar} from 'react-native-elements';
-import Reellist from './Reellist.js';
+import Reellist from '../Components/Reellist.js';
 import {useDispatch, useSelector} from 'react-redux';
 import {Ionicons, MaterialIcons} from '../Styles/Icons.js';
 import {
@@ -25,14 +24,15 @@ import {
   setindex,
 } from '../actions.js';
 import {useFocusEffect} from '@react-navigation/native';
-import Footer from '../Screens/Footer.js';
+import Footer from '../Components/Footer.js';
 import firestore from '@react-native-firebase/firestore';
 import StartingHomePage from './StartingHomePage.js';
 import ImagePicker from 'react-native-image-crop-picker';
-import {Overlay} from 'react-native-elements';
 import ImageResizer from 'react-native-image-resizer';
 import Snackbar from 'react-native-snackbar';
 import * as Sentry from '@sentry/react-native';
+import Modal from '../Components/ReelModal';
+import Loading from '../Components/Loading';
 const wait = timeout => {
   return new Promise(resolve => setTimeout(resolve, timeout));
 };
@@ -54,8 +54,6 @@ export default function ShotoHome({navigation}) {
   const [startAfter, setStartAfter] = useState(null);
 
   const [LastPosition, setLastPosition] = useState(false);
-
-  
 
   const [search, setSearch] = useState('');
   const fetchReelList = async () => {
@@ -252,12 +250,12 @@ export default function ShotoHome({navigation}) {
         dispatch(setChange(!changed));
       } catch (error) {
         toggleOverlay();
-        Sentry.captureMessage(error);
+        Sentry.captureMessage(error.message);
       }
     } else {
       // if reelname already exist it alerts
 
-      alert('Reelname already exist please change the reelname');
+      SnackBarComponent('Reelname already exist please change the reelname');
     }
     setreelname('');
   };
@@ -299,47 +297,49 @@ export default function ShotoHome({navigation}) {
       })
       .catch(err => {
         // Here you handle if the user cancels or any other errors
-        console.log('cancelled');
+        //console.log('cancelled');
       });
   };
   const ClickaPic = (name, id) => {
     ImagePicker.openCamera({
       width: 300,
       height: 400,
-    }).then(image => {
-      dispatch(
-        Addreeldata({
-          reelname: name,
-          reelid: id,
-        }),
-      );
-      ImageResizer.createResizedImage(
-        image.path,
-        640,
-        640,
-        'JPEG',
-        95,
-        0,
-        null,
-        false,
-        {mode: 'cover'},
-      )
-        .then(response => {
-          //console.log(response);
-          navigation.navigate('ReelView', {
-            mediumImage: response.uri,
-            originalImage: image.path,
-            mediumImageName: response.name,
-            originalImageName: image.path.replace(/^.*[\\\/]/, ''),
-          });
+    })
+      .then(image => {
+        dispatch(
+          Addreeldata({
+            reelname: name,
+            reelid: id,
+          }),
+        );
+        ImageResizer.createResizedImage(
+          image.path,
+          640,
+          640,
+          'JPEG',
+          95,
+          0,
+          null,
+          false,
+          {mode: 'cover'},
+        )
+          .then(response => {
+            //console.log(response);
+            navigation.navigate('ReelView', {
+              mediumImage: response.uri,
+              originalImage: image.path,
+              mediumImageName: response.name,
+              originalImageName: image.path.replace(/^.*[\\\/]/, ''),
+            });
 
-          dispatch(setindex(0));
-        })
-        .catch(error => {
-          Sentry.captureException(error.message);
-          SnackBarComponent('Photo not uploaded please retry');
-        });
-    });
+            dispatch(setindex(0));
+          })
+          .catch(error => {
+            Sentry.captureException(error.message);
+            SnackBarComponent('Photo not uploaded please retry');
+          });
+      })
+      .catch(error => {});
   };
   const setReel = (name, id) => {
     // set reel details to reducers
@@ -481,121 +481,7 @@ export default function ShotoHome({navigation}) {
     </KeyboardAvoidingView>
   );
 }
-const SearchHeader = props => {
-  return (
-    <Header
-      containerStyle={{
-        backgroundColor: '#1d2533',
-        borderBottomColor: 'none',
-        height: 90,
-      }}
-      placement="left"
-      centerComponent={
-        <View style={styles.searchView}>
-          <TextInput
-            value={props.search}
-            onChangeText={text => props.setSearch(text)}
-            placeholderTextColor="grey"
-            style={styles.searchInput}
-            placeholder="Type Here"
-          />
-          <Ionicons
-            onPress={() => {
-              props.setIsSearch(!props.isSearch);
-              props.setSearch('');
-            }}
-            style={{paddingRight: 5}}
-            name="ios-close-outline"
-            color="#d4d4d4"
-            size={21}
-          />
-        </View>
-      }
-    />
-  );
-};
-const MainHeader = props => {
-  return (
-    <Header
-      containerStyle={{
-        backgroundColor: '#1d2533',
-        borderBottomColor: 'none',
-        height: 90,
-      }}
-      leftComponent={<Avatar rounded source={{uri: props.profilepic}} />}
-      centerComponent={
-        <View style={styles.headerView}>
-          <Text
-            style={{
-              color: '#d4d4d4',
-              fontSize: 16,
-              paddingTop: 10,
-              fontWeight: 'bold',
-            }}>
-            Shoto.Click
-          </Text>
-        </View>
-      }
-      rightComponent={
-        <MaterialIcons
-          onPress={() => {
-            props.setIsSearch(!props.isSearch);
-          }}
-          name="search"
-          style={{marginTop: 4}}
-          color="white"
-          size={26}
-        />
-      }
-    />
-  );
-};
-const Modal = props => {
-  return (
-    <Overlay
-      isVisible={props.visible}
-      overlayStyle={{backgroundColor: '#1d2533', borderRadius: 10}}
-      onBackdropPress={props.toggleOverlay}
-      backdropStyle={{backgroundColor: 'rgba( 0, 0, 0, 0.8)'}}>
-      <View style={styles.addreelnamecontainer}>
-        <View style={{width: '100%', alignItems: 'center'}}>
-          <Text style={styles.createnewthread}>New Reel !</Text>
-        </View>
-        <View style={{marginTop: 4, marginLeft: 4}}>
-          <Text style={styles.whatshouldwenameit}>
-            What should we name it ?
-          </Text>
-          <TextInput
-            value={props.reelname}
-            placeholderTextColor="grey"
-            onChangeText={text => props.setreelname(text)}
-            style={styles.textinput}
-            placeholder="Getaway with friends"
-          />
-        </View>
-        <View style={styles.footer}>
-          <TouchableOpacity
-            style={styles.footerButtonsContainer}
-            onPress={props.toggleOverlay}>
-            <Text style={styles.footertext}>Go Back</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.footerButtonsContainer}
-            onPress={!props.reelname ? () => {} : props.addReel}>
-            <Text style={styles.footertext}>Create</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </Overlay>
-  );
-};
-const Loading = () => {
-  return (
-    <View style={styles.loadingView}>
-      <ActivityIndicator size="large" color="grey" />
-    </View>
-  );
-};
+
 const styles = StyleSheet.create({
   container: {
     height: '100%',
@@ -667,59 +553,5 @@ const styles = StyleSheet.create({
     minHeight: 40,
     borderWidth: 0.2,
     borderColor: '#d4d4d4',
-  },
-  addreelnamecontainer: {
-    height: 200,
-    width: 290,
-    display: 'flex',
-    flexDirection: 'column',
-    backgroundColor: '#1d2533',
-    paddingTop: 15,
-    justifyContent: 'space-between',
-  },
-  createnewthread: {
-    fontSize: 20,
-    color: '#d4d4d4',
-    marginTop: 10,
-  },
-  whatshouldwenameit: {
-    color: '#d4d4d4',
-    fontSize: 14,
-  },
-  textinput: {
-    padding: 2,
-    borderRadius: 5,
-    width: '95%',
-    fontSize: 16,
-    borderBottomColor: 'grey',
-    borderBottomWidth: 1,
-    color: '#d4d4d4',
-    marginTop: 4,
-  },
-  footer: {
-    display: 'flex',
-    flexDirection: 'row',
-    width: '100%',
-    justifyContent: 'space-around',
-    paddingBottom: 15,
-  },
-  footertext: {
-    fontSize: 15,
-    color: '#d4d4d4',
-  },
-  actcontainer: {
-    height: 200,
-    width: 290,
-    display: 'flex',
-    backgroundColor: '#1d2533',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  footerButtonsContainer: {
-    borderColor: 'grey',
-    borderWidth: 1,
-    padding: 3,
-    width: '40%',
-    alignItems: 'center',
   },
 });

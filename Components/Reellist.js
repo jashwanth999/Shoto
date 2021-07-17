@@ -2,11 +2,9 @@ import React, {useEffect, useState} from 'react';
 import {View, StyleSheet, Text, TouchableOpacity} from 'react-native';
 import {MaterialIcons} from '../Styles/Icons.js';
 import {useSelector} from 'react-redux';
-import FastImage from 'react-native-fast-image';
 import firestore from '@react-native-firebase/firestore';
-import {createImageProgress} from 'react-native-image-progress';
-import ProgressBar from 'react-native-progress/Bar';
-
+import ContributorsView from './ReelListComponents/ContributorsView.js';
+import ImageThumbnail from './ReelListComponents/ReelImageThumbNail';
 export default function Reellist({name, id, t, setReel, ClickaPic}) {
   const db = firestore();
   // const dispatch = useDispatch();
@@ -86,8 +84,7 @@ export default function Reellist({name, id, t, setReel, ClickaPic}) {
       </TouchableOpacity>
 
       <View style={styles.bottomContainer}>
-        <ContributorsPics reelUsers={reelusers} />
-
+        <ContributorsView reelUsers={reelusers} />
         <TouchableOpacity
           onPress={() => {
             ClickaPic(name, id);
@@ -104,66 +101,6 @@ export default function Reellist({name, id, t, setReel, ClickaPic}) {
     </View>
   );
 }
-
-const ContributorsPics = ({reelUsers}) => {
-  return (
-    <View style={styles.contributorsView}>
-      {reelUsers.map((users, index) => {
-        if (index < 3) {
-          return (
-            <FastImage
-              key={index}
-              source={{uri: users.profilepic}}
-              style={styles.contributorsavatar}
-            />
-          );
-        }
-      })}
-      {reelUsers.length > 3 ? (
-        <View
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            marginLeft: 3,
-          }}>
-          <MaterialIcons name="add" color="white" size={13} />
-          <Text style={{color: 'white', marginRight: 10}}>
-            {reelUsers.length - 3}
-          </Text>
-        </View>
-      ) : (
-        <View></View>
-      )}
-    </View>
-  );
-};
-
-const ImageThumbnail = ({imageUri}) => {
-  const Image = createImageProgress(FastImage);
-  return (
-    <View style={{flex: 1}}>
-      <Image
-        indicator={ProgressBar}
-        indicatorProps={{
-          size: 40,
-          borderWidth: 0,
-          color: 'rgba(150, 150, 150, 1)',
-          unfilledColor: 'rgba(200, 200, 200, 0.2)',
-        }}
-        style={{
-          height: 95,
-          marginHorizontal: 2,
-          borderRadius: 2,
-          overflow: 'hidden',
-        }}
-        source={{
-          uri: imageUri,
-        }}
-      />
-    </View>
-  );
-};
 
 const styles = StyleSheet.create({
   container: {
@@ -184,16 +121,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 10,
   },
-  contributorsavatar: {
-    height: 20,
-    width: 20,
-    borderRadius: 100,
-    overflow: 'hidden',
-  },
-  contributorsView: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
+
   titleContainer: {
     display: 'flex',
     flexDirection: 'column',

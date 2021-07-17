@@ -1,10 +1,10 @@
-const initailState = {
+const initialState = {
   reellistimages: [],
 };
-export const Addreelimagereducer = (state = initailState, action) => {
+export const Addreelimagereducer = (state = initialState, action) => {
   switch (action.type) {
     case 'ADD_REEL_IMAGES':
-      return {reellistimages: action.payload};
+      return {...state, reellistimages: action.payload};
     case 'UPDATE_LOCAL_IMAGES':
       return {
         ...state,

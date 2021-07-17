@@ -1,8 +1,8 @@
-const initailState = {
+const initialState  = {
   reellist: [],
   
 };
-export const Addreellistreducer = (state = initailState, action) => {
+export const Addreellistreducer = (state = initialState , action) => {
   switch (action.type) {
     case 'ADD_REEL_NAME':
       return {...state, reellist: action.payload};

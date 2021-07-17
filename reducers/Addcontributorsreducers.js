@@ -1,11 +1,11 @@
 
-const initailState = {
+const initialState = {
   contributorslist: [],
 }
-export const Addcontributorsreducers = (state = initailState, action) => {
+export const Addcontributorsreducers = (state = initialState, action) => {
   switch (action.type) {
     case "ADD_CONTRIBUTORS":
-      return { contributorslist: action.payload };
+      return {...state, contributorslist: action.payload };
     default:
       return state;
   }

@@ -1,10 +1,10 @@
-const initailState = {
+const initialState  = {
   changed: false,
 };
-export const Changetrigger = (state = initailState, action) => {
+export const Changetrigger = (state = initialState , action) => {
   switch (action.type) {
     case "CHANGE":
-      return { changed: action.payload };
+      return { ...state,changed: action.payload };
     default:
       return state;
   }

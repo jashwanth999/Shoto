@@ -1,14 +1,14 @@
-const initailState = {
+const initialState = {
   reeldata: {},
 };
-export const Setreelreducers = (state = initailState, action) => {
+export const Setreelreducers = (state = initialState, action) => {
   switch (action.type) {
     case 'SET_REEL_DATA':
-      return {reeldata: action.payload};
+      return {...state, reeldata: action.payload};
     case 'CLEAR_REEL_DATA':
       return {
         ...state,
-        reeldata: [],
+        reeldata: {},
       };
     default:
       return state;

@@ -12,21 +12,10 @@ import {Ionicons, MaterialCommunityIcons} from '../Styles/Icons';
 import {useSelector, useDispatch} from 'react-redux';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {Overlay} from 'react-native-elements';
 import {Addreel, Adduser} from '../actions';
 import auth from '@react-native-firebase/auth';
-function Hello() {
-  return (
-    <View style={styles.helloContainer}>
-      <Text style={[styles.helloText, {color: '#0F9D58'}]}>H</Text>
-      <Text style={[styles.helloText, {color: '#DB4437'}]}>e</Text>
-      <Text style={[styles.helloText, {color: '#4285F4'}]}>l</Text>
-      <Text style={[styles.helloText, {color: '#4285F4'}]}>l</Text>
-      <Text style={[styles.helloText, {color: '#F4B400'}]}>o</Text>
-      <Text style={[styles.helloText, {color: '#0F9D58'}]}>!</Text>
-    </View>
-  );
-}
+import OverLayComponent from '../Components/UserProfileComponents/OverLayComponent';
+import HelloComponent from '../Components/UserProfileComponents/HelloComponent';
 
 function UserProfile({navigation}) {
   GoogleSignin.configure({
@@ -59,41 +48,29 @@ function UserProfile({navigation}) {
   };
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} style={{flex: 1}}>
+    <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
       <View style={styles.header}>
-        <Hello />
+        <HelloComponent />
         <Text style={styles.userNameText}>{user?.username}</Text>
         <TouchableOpacity
           onPress={() => {
             navigation.navigate('Shotohome');
           }}
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            position: 'absolute',
-            left: 10,
-            top: 40,
-          }}>
+          style={styles.backButtonView}>
           <Ionicons name="chevron-back" color="#d4d4d4" size={21} />
-          <Text style={{color: '#d4d4d4', fontSize: 15}}>Back</Text>
+          <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
       </View>
 
       <TouchableOpacity
-        style={{position: 'absolute', right: 10, top: 40}}
+        style={styles.logoutIconButton}
         onPress={() => {
           toggleOverlay();
         }}>
         <MaterialCommunityIcons name="logout" color="white" size={22} />
       </TouchableOpacity>
 
-      <View
-        style={{
-          width: '100%',
-          alignItems: 'center',
-          position: 'absolute',
-          top: '40%',
-        }}>
+      <View style={styles.avatarView}>
         <Avatar
           source={{
             uri: user?.profilepic,
@@ -128,69 +105,24 @@ function UserProfile({navigation}) {
           />
         </View>
       </View>
-      <View style={{width: '100%', alignItems: 'center', marginTop: 20}}>
+      <View style={styles.saveView}>
         <TouchableOpacity style={styles.saveContainer}>
           <Text style={styles.caption}>Save</Text>
         </TouchableOpacity>
       </View>
-      <Overlay
-        isVisible={visible}
-        overlayStyle={{
-          backgroundColor: 'white',
-          borderRadius: 10,
-          width: '80%',
-          height: 100,
-          borderRadius: 5,
-        }}
-        onBackdropPress={toggleOverlay}
-        backdropStyle={{backgroundColor: 'rgba( 0, 0, 0, 0.8)'}}>
-        <Text
-          style={{
-            color: 'black',
-            fontSize: 20,
-            fontWeight: 'bold',
-            marginLeft: 10,
-            marginTop: 10,
-          }}>
-          {' '}
-          Do you want to logout ?
-        </Text>
-        <View
-          style={{
-            position: 'absolute',
-            right: 15,
-            bottom: 15,
-            flexDirection: 'row',
-          }}>
-          <TouchableOpacity onPress={toggleOverlay}>
-            <Text
-              style={{
-                color: '#29A7EC',
-                fontSize: 18,
-                fontWeight: 'bold',
-                marginRight: 10,
-              }}>
-              No
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={signOut}>
-            <Text
-              style={{
-                color: '#29A7EC',
-                fontSize: 18,
-                fontWeight: 'bold',
-                marginLeft: 5,
-              }}>
-              Yes
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </Overlay>
+      <OverLayComponent
+        visible={visible}
+        toggleOverlay={toggleOverlay}
+        signOut={signOut}
+      />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   header: {
     backgroundColor: 'rgba(29, 37, 51, 1)',
     height: 230,
@@ -203,20 +135,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     marginTop: 10,
   },
-  helloContainer: {
-    height: 50,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-    flexWrap: 'nowrap',
-  },
-  helloText: {
-    alignSelf: 'center',
-    color: '#d4d4d4',
-    fontSize: 40,
-    fontWeight: '800',
-    margin: 4,
-  },
+
   materialButton: {
     minHeight: 40,
     width: '40%',
@@ -248,6 +167,33 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(29, 37, 51, 1)',
     marginLeft: 20,
     marginRight: 20,
+  },
+  backButtonView: {
+    display: 'flex',
+    flexDirection: 'row',
+    position: 'absolute',
+    left: 10,
+    top: 40,
+  },
+  backButtonText: {
+    color: '#d4d4d4',
+    fontSize: 15,
+  },
+  avatarView: {
+    width: '100%',
+    alignItems: 'center',
+    position: 'absolute',
+    top: '40%',
+  },
+  saveView: {
+    width: '100%',
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  logoutIconButton: {
+    position: 'absolute',
+    right: 10,
+    top: 40,
   },
 });
 
