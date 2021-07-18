@@ -13,8 +13,6 @@ import auth from '@react-native-firebase/auth';
 
 const Stack = createStackNavigator();
 export default function StackNavigator() {
-  const user = auth().currentUser;
-
   return (
     <Stack.Navigator
       screenOptions={{

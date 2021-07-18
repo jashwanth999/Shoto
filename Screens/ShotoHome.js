@@ -363,6 +363,9 @@ export default function ShotoHome({navigation}) {
       duration: Snackbar.LENGTH_SHORT,
     });
   };
+  const goToUserProfile = () => {
+    navigation.navigate('userprofile');
+  };
 
   return (
     <KeyboardAvoidingView
@@ -466,10 +469,15 @@ export default function ShotoHome({navigation}) {
       )}
       <Footer
         navigation={navigation}
-        addReel={addReel}
-        takePhoto={takePhoto}
-        toggleOverlay={toggleOverlay}
-        page="home"
+        icon1Name={'New reel'}
+        icon3Name={'Profile'}
+        icon1={'movie-roll'}
+        icon2={'camera-iris'}
+        icon3={'ios-person-circle'}
+        onIcon1Press={toggleOverlay}
+        onIcon2Press={takePhoto}
+        onIcon3Press={goToUserProfile}
+        check={'home'}
       />
       <Modal
         visible={visible}

@@ -11,7 +11,7 @@ export default Retry = ({retryUploadCloudImage, act}) => {
           <ActivityIndicator color="#fff" />
         ) : (
           <MaterialCommunityIcons
-            onPress={() => {
+            onPress={() => { 
               retryUploadCloudImage();
             }}
             name="cloud-upload-outline"

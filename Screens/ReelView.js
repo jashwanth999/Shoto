@@ -25,16 +25,10 @@ import Footer from '../Components/Footer.js';
 import Snackbar from 'react-native-snackbar';
 import ImageResizer from 'react-native-image-resizer';
 import * as Sentry from '@sentry/react-native';
-import {
-  kEYPREFIX,
-  BUCKETNAMEONE,
-  BUCKETNAMETWO,
-  ACCESSKEY,
-  SECRETKEY,
-  REGION,
-} from '../Security/Keys.js';
+import AWS from 'aws-sdk/dist/aws-sdk-react-native';
 export default function ReelView({navigation, route}) {
   const width = Dimensions.get('window').width;
+
   const db = firestore();
   const {mediumImage, mediumImageName, originalImageName, originalImage} =
     route.params;
@@ -55,6 +49,82 @@ export default function ReelView({navigation, route}) {
   const [spinner, setSpinner] = useState(false);
 
   const currentUser = auth().currentUser;
+  const s3 = new AWS.S3({
+    region: 'ap-south-1',
+    credentials: {
+      bucket: 'shoto-resized-production',
+      region: 'ap-south-1',
+      accessKey: 'AKIAR77UFFI6JWKBCVUU',
+      secretKey: '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',
+    },
+  });
+
+  const rns3Upload = (file, options, imageid, check) => {
+    let uploadToS3Ref = db
+      .collection('reels')
+      .doc(reeldata.reelid)
+      .collection('reelimages')
+      .doc(imageid);
+    let uploadS3ToUserReels = db
+      .collection('user_reels')
+      .doc(user.email)
+      .collection('AllUserPhotos')
+      .doc(imageid);
+    RNS3.put(file, options)
+      .then(response => {
+        if (response.status !== 201) {
+          SnackBarComponent('Please check your internet connection and retry');
+        } else {
+          if (check === 'medium') {
+            try {
+              uploadToS3Ref.update({
+                cloudMediumImage: response.body.postResponse.location,
+                isUploadedMedium: true,
+              });
+
+              uploadS3ToUserReels.set({
+                cloudMediumImage: response.body.postResponse.location,
+              });
+            } catch (error) {
+              uploadToS3Ref.update({
+                cloudMediumImage: '',
+                isUploadedMedium: false,
+              });
+              Sentry.captureException(error.message);
+              SnackBarComponent(
+                'Please check your internet connection and retry',
+              );
+            }
+          } else {
+            try {
+              uploadToS3Ref.update({
+                cloudOriginalImage: response.body.postResponse.location,
+                isUploadOriginal: true,
+              });
+            } catch (error) {
+              uploadToS3Ref.update({
+                cloudOriginalImage: '',
+                isUploadOriginal: false,
+              });
+              Sentry.captureException(error.message);
+              SnackBarComponent(
+                'Please check your internet connection and retry',
+              );
+            }
+          }
+        }
+      })
+      .catch(error => {
+        uploadToS3Ref.update({
+          cloudMediumImage: '',
+          isUploadedMedium: false,
+          cloudOriginalImage: '',
+          isUploadOriginal: false,
+        });
+        Sentry.captureException(error.message);
+        SnackBarComponent('Please check your internet connection and retry');
+      });
+  };
 
   const uploadCloudImage = imageid => {
     const mediumImageFile = {
@@ -83,85 +153,8 @@ export default function ReelView({navigation, route}) {
       secretKey: 'gF9TIoI6tR46vBykkjkPtqELuqG28qS0+xBp70kN',
       successActionStatus: 201,
     };
-    let uploadToS3Ref = db
-      .collection('reels')
-      .doc(reeldata.reelid)
-      .collection('reelimages')
-      .doc(imageid);
-
-    let uploadS3ToUserReels = db
-      .collection('user_reels')
-      .doc(user.email)
-      .collection('AllUserPhotos')
-      .doc(imageid);
-
-    // Uploading Medium Image
-    RNS3.put(mediumImageFile, optionsForMedium)
-      .then(response => {
-        if (response.status !== 201) {
-          SnackBarComponent('Please check your internet connection and retry');
-        } else {
-          try {
-            uploadToS3Ref.update({
-              cloudMediumImage: response.body.postResponse.location,
-              isUploadedMedium: true,
-            });
-
-            uploadS3ToUserReels.set({
-              cloudMediumImage: response.body.postResponse.location,
-            });
-          } catch (error) {
-            uploadToS3Ref.update({
-              cloudMediumImage: '',
-              isUploadedMedium: false,
-            });
-            Sentry.captureException(error.message);
-            SnackBarComponent(
-              'Please check your internet connection and retry',
-            );
-          }
-        }
-      })
-      .catch(error => {
-        uploadToS3Ref.update({
-          cloudMediumImage: '',
-          isUploadedMedium: false,
-        });
-        Sentry.captureException(error.message);
-        SnackBarComponent('Please check your internet connection and retry');
-      });
-
-    //Uploading Original Image
-    RNS3.put(originalImageFile, optionsForOriginal)
-      .then(response => {
-        if (response.status !== 201) {
-          SnackBarComponent('Please check your internet connection and retry');
-        } else {
-          try {
-            uploadToS3Ref.update({
-              cloudOriginalImage: response.body.postResponse.location,
-              isUploadOriginal: true,
-            });
-          } catch (error) {
-            uploadToS3Ref.update({
-              cloudOriginalImage: '',
-              isUploadOriginal: false,
-            });
-            Sentry.captureException(error.message);
-            SnackBarComponent(
-              'Please check your internet connection and retry',
-            );
-          }
-        }
-      })
-      .catch(error => {
-        uploadToS3Ref.update({
-          cloudOriginalImage: '',
-          isUploadOriginal: false,
-        });
-        Sentry.captureException(error.message);
-        SnackBarComponent('Please check your internet connection and retry');
-      });
+    rns3Upload(mediumImageFile, optionsForMedium, imageid, 'medium');
+    rns3Upload(originalImageFile, optionsForOriginal, imageid, 'original');
   };
 
   const uploadLocalImage = () => {
@@ -324,6 +317,8 @@ export default function ReelView({navigation, route}) {
           d={item.reelimages?.date}
           SnackBarComponent={SnackBarComponent}
           navigation={navigation}
+          removeFromReel={removeFromReel}
+          deletePermanently={deletePermanently}
         />
       );
     }
@@ -381,6 +376,45 @@ export default function ReelView({navigation, route}) {
       text: message,
       duration: Snackbar.LENGTH_SHORT,
     });
+  };
+  const removeFromReel = imageid => {
+    let deleteRef = db
+      .collection('reels')
+      .doc(reeldata.reelid)
+      .collection('reelimages')
+      .doc(imageid);
+    try {
+      deleteRef.delete().then(() => {
+        //  SnackBarComponent('Image deleted successfully');
+      });
+    } catch (error) {
+      SnackBarComponent('Image not deleted please retry');
+    }
+  };
+  const deletePermanently = imageid => {
+    let deleteFromReelImages = db
+      .collection('reels')
+      .doc(reeldata.reelid)
+      .collection('reelimages')
+      .doc(imageid);
+    let deleteFromUserPhotos = db
+      .collection('user_reels')
+      .doc(user.email)
+      .collection('AllUserPhotos')
+      .doc(imageid);
+
+    try {
+      deleteFromReelImages.delete();
+      deleteFromUserPhotos.delete();
+    } catch (error) {
+      SnackBarComponent('Image not deleted please retry');
+    }
+  };
+  const goToHome = () => {
+    navigation.navigate('Shotohome');
+  };
+  const goToAddScreen = () => {
+    navigation.navigate('Adduserlist');
   };
 
   return (
@@ -453,7 +487,17 @@ export default function ReelView({navigation, route}) {
           </View>
         </View>
       )}
-      <Footer navigation={navigation} takePhoto={takePhoto} />
+      <Footer
+        navigation={navigation}
+        icon1Name={'Add People'}
+        icon3Name={'Home'}
+        icon1={'person-add'}
+        icon2={'camera-iris'}
+        icon3={'home'}
+        onIcon1Press={goToAddScreen}
+        onIcon2Press={takePhoto}
+        onIcon3Press={goToHome}
+      />
     </View>
   );
 }

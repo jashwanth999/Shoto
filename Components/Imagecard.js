@@ -9,18 +9,10 @@ import {useSelector} from 'react-redux';
 import * as Sentry from '@sentry/react-native';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
-import {
-  ACCESSKEY,
-  BUCKETNAMEONE,
-  BUCKETNAMETWO,
-  kEYPREFIX,
-  REGION,
-  SECRETKEY,
-} from '../Security/Keys';
 import Retry from './ImageCardComponents.js/Retry';
 import CreatorBadge from './ImageCardComponents.js/CreatorBadge';
 import CommentBadge from './ImageCardComponents.js/CommentBadge';
-
+import Remove from './ImageCardComponents.js/Remove';
 export default function imagecard({
   navigation,
   uploadername,
@@ -39,8 +31,16 @@ export default function imagecard({
   cloudOriginalImage,
   uploaderid,
   SnackBarComponent,
+  removeFromReel,
+  deletePermanently,
 }) {
   const Image = createImageProgress(FastImage);
+  const [visible, setVisible] = useState(false);
+
+  const toggleOverlay = () => {
+    setVisible(!visible);
+  };
+
   const [act, setAct] = useState(false);
   const user = useSelector(state => state.user.user);
   const reeldata = useSelector(state => state.reeldata.reeldata);
@@ -63,7 +63,6 @@ export default function imagecard({
   };
   const retryUploadCloudImage = () => {
     setAct(true);
-
     const mediumImageFile = {
       uri: localMediumImage,
       name: localMediumImage?.replace(/^.*[\\\/]/, ''),
@@ -185,6 +184,7 @@ export default function imagecard({
     <TouchableOpacity
       activeOpacity={0.8}
       onPress={goToImageView}
+      onLongPress={toggleOverlay}
       style={[styles.container, containerStyle]}>
       <View>
         <Image
@@ -224,6 +224,15 @@ export default function imagecard({
       ) : (
         <View />
       )}
+      <Remove
+        visible={visible}
+        toggleOverlay={toggleOverlay}
+        imageid={imageid}
+        removeFromReel={removeFromReel}
+        deletePermanently={deletePermanently}
+        uploaderid={uploaderid}
+        user={user}
+      />
     </TouchableOpacity>
   );
 }
