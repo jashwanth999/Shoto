@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useCallback} from 'react';
+import React, {useEffect, useState, useCallback, useRef} from 'react';
 import {
   View,
   StyleSheet,
@@ -11,11 +11,11 @@ import {
   Dimensions,
 } from 'react-native';
 import {Header} from 'react-native-elements';
-import {Ionicons} from '../Styles/Icons.js';
+import {Ionicons, MaterialIcons} from '../Styles/Icons.js';
 import Imagecard from '../Components/Imagecard.js';
 import Thumbnail from '../Components/Thumbnail.js';
 import {useSelector, useDispatch} from 'react-redux';
-import {Addreelimages, setindex} from '../actions.js';
+import {Addreelimages, setChange, setindex} from '../actions.js';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import {useFocusEffect} from '@react-navigation/native';
@@ -25,15 +25,25 @@ import Footer from '../Components/Footer.js';
 import Snackbar from 'react-native-snackbar';
 import ImageResizer from 'react-native-image-resizer';
 import * as Sentry from '@sentry/react-native';
-import AWS from 'aws-sdk/dist/aws-sdk-react-native';
+//import AWS from 'aws-sdk/dist/aws-sdk-react-native';
+import {Tooltip} from 'react-native-elements/dist/tooltip/Tooltip';
+import DeleteReelOverlay from '../Components/ReelViewComponents.js/DeleteReelOverlay.js';
+import ReelDeletionMenu from '../Components/ReelViewComponents.js/ReelDeletionMenu.js';
+import LoadingView from '../Components/ReelViewComponents.js/LoadingView.js';
 export default function ReelView({navigation, route}) {
   const width = Dimensions.get('window').width;
-
+  const changed = useSelector(state => state.changed.changed);
   const db = firestore();
   const {mediumImage, mediumImageName, originalImageName, originalImage} =
     route.params;
   const user = useSelector(state => state.user.user);
   const date = new Date();
+  // get details of reels stored in reducers
+
+  const reeldata = useSelector(state => state.reeldata.reeldata);
+  const [spinner, setSpinner] = useState(false);
+
+  const currentUser = auth().currentUser;
 
   // get images of reels stored in reducers
   const reelimages = useSelector(state => state.reellistimages.reellistimages);
@@ -42,22 +52,36 @@ export default function ReelView({navigation, route}) {
   const [lastPosition, setLastPosition] = useState(false);
   const [startAfter, setstartAfter] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [admin, setAdmin] = useState('');
+  const [reelusers, setreelusers] = useState([]);
+  const [visible, setVisible] = useState(false);
 
-  // get details of reels stored in reducers
+  const toggleOverlay = () => {
+    setVisible(!visible);
+  };
+  useEffect(() => {
+    if (user?.email) {
+      const unsubscribe = db
+        .collection('reels')
+        .doc(reeldata.reelid)
+        .collection('reelusers')
+        .where('useremail', '!=', user?.email)
+        .onSnapshot(snapshot => {
+          setreelusers(snapshot.docs.map(doc => doc.data()?.useremail));
+        });
+      return unsubscribe;
+    }
+  }, [reeldata.reelid]);
 
-  const reeldata = useSelector(state => state.reeldata.reeldata);
-  const [spinner, setSpinner] = useState(false);
-
-  const currentUser = auth().currentUser;
-  const s3 = new AWS.S3({
-    region: 'ap-south-1',
-    credentials: {
-      bucket: 'shoto-resized-production',
-      region: 'ap-south-1',
-      accessKey: 'AKIAR77UFFI6JWKBCVUU',
-      secretKey: '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',
-    },
-  });
+  useEffect(() => {
+    const unsubscribe = db
+      .collection('reels')
+      .doc(reeldata.reelid)
+      .onSnapshot(doc => {
+        setAdmin(doc.data()?.created_useremail);
+      });
+    return unsubscribe;
+  }, [reeldata.reelid]);
 
   const rns3Upload = (file, options, imageid, check) => {
     let uploadToS3Ref = db
@@ -416,6 +440,48 @@ export default function ReelView({navigation, route}) {
   const goToAddScreen = () => {
     navigation.navigate('Adduserlist');
   };
+  const toolref = useRef(null);
+
+  const deleteReel = () => {
+    if (reelusers.length === 0) {
+      db.collection('reels').doc(reeldata.reelid).delete();
+      db.collection('user_reels')
+        .doc(admin)
+        .collection('reellist')
+        .doc(reeldata.reelid)
+        .delete();
+    } else {
+      if (admin === user.email) {
+        db.collection('user_reels')
+          .doc(user.email)
+          .collection('reellist')
+          .doc(reeldata.reelid)
+          .delete();
+        db.collection('reels')
+          .doc(reeldata.reelid)
+          .collection('reelusers')
+          .doc(user.email)
+          .delete();
+        var newAdmin = reelusers[Math.floor(Math.random() * reelusers.length)];
+        db.collection('reels').doc(reeldata.reelid).update({
+          created_useremail: newAdmin,
+        });
+      } else {
+        db.collection('user_reels')
+          .doc(user.email)
+          .collection('reellist')
+          .doc(reeldata.reelid)
+          .delete();
+        db.collection('reels')
+          .doc(reeldata.reelid)
+          .collection('reelusers')
+          .doc(user.email)
+          .delete();
+      }
+    }
+    dispatch(setChange(!changed));
+    navigation.navigate('Shotohome');
+  };
 
   return (
     <View style={styles.container}>
@@ -441,6 +507,9 @@ export default function ReelView({navigation, route}) {
               {reeldata.reelname}
             </Text>
           </View>
+        }
+        rightComponent={
+          <ToolTipComponent toolref={toolref} toggleOverlay={toggleOverlay} />
         }
       />
       <StatusBar backgroundColor="#1d2533" />
@@ -498,14 +567,29 @@ export default function ReelView({navigation, route}) {
         onIcon2Press={takePhoto}
         onIcon3Press={goToHome}
       />
+      <DeleteReelOverlay
+        deleteReel={deleteReel}
+        toggleOverlay={toggleOverlay}
+        visible={visible}
+      />
     </View>
   );
 }
-const LoadingView = () => {
+const ToolTipComponent = props => {
   return (
-    <View style={styles.loadingView}>
-      <ActivityIndicator size="large" color="grey" />
-    </View>
+    <Tooltip
+      ref={props.toolref}
+      containerStyle={styles.reelDeletionMenu}
+      overlayColor="rgba( 0, 0, 0, 0.8)"
+      withPointer={false}
+      popover={
+        <ReelDeletionMenu
+          toolref={props.toolref}
+          toggleOverlay={props.toggleOverlay}
+        />
+      }>
+      <MaterialIcons name="more-vert" color="#d4d4d4" size={21} />
+    </Tooltip>
   );
 };
 
@@ -554,9 +638,10 @@ const styles = StyleSheet.create({
     color: '#d4d4d4',
     fontSize: 15,
   },
-  loadingView: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+  reelDeletionMenu: {
+    height: 40,
+    width: 150,
+    backgroundColor: '#1d2533',
+    borderRadius: 2,
   },
 });

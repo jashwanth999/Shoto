@@ -113,7 +113,8 @@ function UserProfile({navigation}) {
       <OverLayComponent
         visible={visible}
         toggleOverlay={toggleOverlay}
-        signOut={signOut}
+        actionName={'Do you want to logout ?'}
+        action={signOut}
       />
     </ScrollView>
   );

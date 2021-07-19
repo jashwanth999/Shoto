@@ -9,12 +9,12 @@ export default OverLayComponent = props => {
       overlayStyle={styles.overlayStyle}
       onBackdropPress={props.toggleOverlay}
       backdropStyle={styles.backdropStyle}>
-      <Text style={styles.wantToLogoutText}> Do you want to logout ?</Text>
+      <Text style={styles.wantToLogoutText}>{props.actionName}</Text>
       <View style={styles.overlayBottomView}>
         <TouchableOpacity onPress={props.toggleOverlay}>
           <Text style={styles.noText}>No</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={props.signOut}>
+        <TouchableOpacity onPress={props.action}>
           <Text style={styles.yesText}>Yes</Text>
         </TouchableOpacity>
       </View>
