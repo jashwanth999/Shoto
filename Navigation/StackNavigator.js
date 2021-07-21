@@ -10,9 +10,11 @@ import Photoview from '../Screens/Photoview.js';
 import UserProfile from '../Screens/UserProfile.js';
 import SelectImageScreen from '../Screens/SelectImageScreen.js';
 import auth from '@react-native-firebase/auth';
+import UserPhotos from '../Screens/UserPhotosScreen.js';
 
 const Stack = createStackNavigator();
 export default function StackNavigator() {
+  
   return (
     <Stack.Navigator
       screenOptions={{
@@ -27,6 +29,7 @@ export default function StackNavigator() {
       <Stack.Screen name="Photoview" component={Photoview} />
       <Stack.Screen name="userprofile" component={UserProfile} />
       <Stack.Screen name="selectimagescreen" component={SelectImageScreen} />
+      <Stack.Screen name="AllUserPhotos" component={UserPhotos} />
     </Stack.Navigator>
   );
 }

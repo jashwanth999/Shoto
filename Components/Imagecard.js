@@ -46,6 +46,7 @@ export default function imagecard({
   const reeldata = useSelector(state => state.reeldata.reeldata);
   const currentUser = auth().currentUser;
   const db = firestore();
+  const date = new Date();
   const goToImageView = () => {
     navigation.navigate('ImageView', {
       reelid: reelid,
@@ -115,7 +116,13 @@ export default function imagecard({
               isUploadedMedium: true,
             });
             uploadS3ToUserReels.set({
-              cloudOriginalImage: response.body.postResponse.location,
+              cloudMediumImage: response.body.postResponse.location,
+              reelid: reeldata.reelid,
+              timestamp: new Date(),
+              date: date.getHours() + ':' + date.getMinutes(),
+              uploadedby: user.email,
+              uploaderpropic: user.profilepic,
+              uploadername: user.username,
             });
             setAct(false);
           } catch (error) {

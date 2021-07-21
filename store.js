@@ -8,6 +8,7 @@ import {scrolltoindex} from './reducers/scrollindexreducer';
 import {getreeluseremailreducer} from './reducers/getreeluseremail';
 import {Reelnames} from './reducers/Reelnamesreducer';
 import {Changetrigger} from './reducers/Changetrigger';
+import {AlluserPhotosReducers} from './reducers/allUserPhotosReducer';
 
 const combined = combineReducers({
   reels: Addreellistreducer,
@@ -19,5 +20,6 @@ const combined = combineReducers({
   emails: getreeluseremailreducer,
   reelnames: Reelnames,
   changed: Changetrigger,
+  userPhotos: AlluserPhotosReducers,
 });
 export const store = createStore(combined);

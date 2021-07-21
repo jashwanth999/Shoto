@@ -3,7 +3,7 @@ import {View, StyleSheet} from 'react-native';
 import FastImage from 'react-native-fast-image';
 import {createImageProgress} from 'react-native-image-progress';
 import ProgressBar from 'react-native-progress/Bar';
-export default ImageThumbnail = ({imageUri}) => {
+export default ImageThumbnail = props => {
   const Image = createImageProgress(FastImage);
   return (
     <View style={{flex: 1}}>
@@ -15,9 +15,9 @@ export default ImageThumbnail = ({imageUri}) => {
           color: 'rgba(150, 150, 150, 1)',
           unfilledColor: 'rgba(200, 200, 200, 0.2)',
         }}
-        style={styles.imageStyle}
+        style={[styles.imageStyle]}
         source={{
-          uri: imageUri,
+          uri: props.imageUri,
         }}
       />
     </View>

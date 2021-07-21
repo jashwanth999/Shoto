@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import Comments from '../Components/Comments.js';
-
 import {useSelector, useDispatch} from 'react-redux';
 import firestore from '@react-native-firebase/firestore';
 import {AddComments} from '../actions.js';
@@ -97,6 +96,8 @@ export default function ImageView({navigation, route}) {
           onPress={() =>
             navigation.navigate('Photoview', {
               cloudOriginalImage: cloudOriginalImage,
+              timestamp: t,
+              time: d,
             })
           }>
           <FastImage style={styles.backgroundImage} source={{uri: imageurl}} />

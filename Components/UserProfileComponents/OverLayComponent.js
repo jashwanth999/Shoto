@@ -24,7 +24,7 @@ export default OverLayComponent = props => {
 
 const styles = StyleSheet.create({
   overlayStyle: {
-    backgroundColor: 'white',
+    backgroundColor: '#1d2533',
     borderRadius: 10,
     width: '80%',
     height: 100,
@@ -34,8 +34,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba( 0, 0, 0, 0.8)',
   },
   wantToLogoutText: {
-    color: 'black',
-    fontSize: 20,
+    color: '#d4d4d4',
+    fontSize: 18,
     fontWeight: 'bold',
     marginLeft: 10,
     marginTop: 10,
@@ -47,13 +47,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   noText: {
-    color: '#29A7EC',
+    color: 'rgba(36, 123, 160, 0.8)',
     fontSize: 18,
     fontWeight: 'bold',
     marginRight: 10,
   },
   yesText: {
-    color: '#29A7EC',
+    color: 'rgba(36, 123, 160, 0.8)',
     fontSize: 18,
     fontWeight: 'bold',
     marginLeft: 5,

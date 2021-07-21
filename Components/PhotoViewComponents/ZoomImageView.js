@@ -3,11 +3,10 @@ import {StyleSheet} from 'react-native';
 import Image from 'react-native-image-progress';
 import ReactNativeZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZoomableView';
 import ProgressBar from 'react-native-progress/Bar';
-
 export default ZoomImageView = ({imageurl}) => {
   return (
     <ReactNativeZoomableView
-      maxZoom={1.5}
+      maxZoom={2}
       minZoom={0.5}
       zoomStep={0.5}
       initialZoom={1}

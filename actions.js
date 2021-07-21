@@ -106,6 +106,9 @@ export const setChange = change => {
     payload: change,
   };
 };
-
-
-
+export const allUserPhotosAction = userPhotos => {
+  return {
+    type: 'USER_PHOTOS',
+    payload: userPhotos,
+  };
+};

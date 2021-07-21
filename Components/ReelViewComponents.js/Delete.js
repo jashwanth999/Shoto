@@ -4,23 +4,18 @@ import {TouchableOpacity} from 'react-native';
 import {Overlay} from 'react-native-elements/dist/overlay/Overlay';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
-export default DeleteReelOverlay = props => {
+export default DeleteOverlay = props => {
   return (
     <Overlay
-      overlayStyle={styles.overlayStyle}
+      overlayStyle={[styles.overlayStyle, {height: props.height}]}
       isVisible={props.visible}
       backdropStyle={{backgroundColor: 'rgba( 0, 0, 0, 0.8)'}}
       onBackdropPress={props.toggleOverlay}>
       <View style={styles.deleteReel}>
-        <MaterialCommunityIcons
-          name="table-column-remove"
-          style={styles.icon}
-        />
+        <MaterialCommunityIcons name={props.iconName} style={styles.icon} />
         <View style={{width: '60%'}}>
-          <Text style={styles.text}>Delete Reel</Text>
-          <Text style={styles.subText}>
-            Other Contributors will still able to see the reel
-          </Text>
+          <Text style={styles.text}>{props.deleteHead}</Text>
+          <Text style={styles.subText}>{props.deleteSubHead}</Text>
         </View>
       </View>
       <View style={styles.footer}>
@@ -30,7 +25,7 @@ export default DeleteReelOverlay = props => {
           <Text style={styles.footertext}>Cancel</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={props.deleteReel}
+          onPress={props.deleteAction}
           style={styles.footerButtonsContainer}>
           <Text style={styles.footertext}>Delete</Text>
         </TouchableOpacity>
@@ -41,7 +36,6 @@ export default DeleteReelOverlay = props => {
 
 const styles = StyleSheet.create({
   overlayStyle: {
-    height: 170,
     width: 260,
     backgroundColor: 'rgba(29,37,51,1)',
     flexDirection: 'column',

@@ -27,12 +27,14 @@ import {useFocusEffect} from '@react-navigation/native';
 import Footer from '../Components/Footer.js';
 import firestore from '@react-native-firebase/firestore';
 import StartingHomePage from './StartingHomePage.js';
-import ImagePicker from 'react-native-image-crop-picker';
+import * as ImagePicker from 'react-native-image-picker';
 import ImageResizer from 'react-native-image-resizer';
 import Snackbar from 'react-native-snackbar';
 import * as Sentry from '@sentry/react-native';
 import Modal from '../Components/ReelModal';
 import Loading from '../Components/Loading';
+import AllUserPhotosReelCard from '../Components/ShotoHomeComponents/AllUserPhotosReelCard.js';
+import OverLayComponent from '../Components/UserProfileComponents/OverLayComponent.js';
 const wait = timeout => {
   return new Promise(resolve => setTimeout(resolve, timeout));
 };
@@ -54,6 +56,11 @@ export default function ShotoHome({navigation}) {
   const [startAfter, setStartAfter] = useState(null);
 
   const [LastPosition, setLastPosition] = useState(false);
+  const [exitVisible, setExitVisibleAlert] = useState(false);
+
+  const exitToggleOverlay = () => {
+    setExitVisibleAlert(!exitVisible);
+  };
 
   const [search, setSearch] = useState('');
   const fetchReelList = async () => {
@@ -121,6 +128,7 @@ export default function ShotoHome({navigation}) {
   useFocusEffect(
     React.useCallback(() => {
       const onBackPress = () => {
+        exitToggleOverlay();
         return true;
       };
       BackHandler.addEventListener('hardwareBackPress', onBackPress);
@@ -188,7 +196,7 @@ export default function ShotoHome({navigation}) {
           name={item.reellist?.reelname}
           navigation={navigation}
           t={new Date(item.reellist?.timestamp?.seconds * 1000).toUTCString()}
-          ClickaPic={ClickaPic}
+          ClickaPic={ClickaPic2}
           setReel={setReel}
         />
       );
@@ -341,6 +349,106 @@ export default function ShotoHome({navigation}) {
       })
       .catch(error => {});
   };
+  const takePhoto2 = () => {
+    let options = {
+      storageOptions: {
+        skipBackup: true,
+        path: 'images',
+      },
+    };
+    ImagePicker.launchCamera(options, response => {
+      if (response.didCancel) {
+        //console.log('User cancelled image picker');
+      } else if (response.error) {
+        //console.log('ImagePicker Error: ', response.error);
+      } else if (response.customButton) {
+        // console.log('User tapped custom button: ', response.customButton);
+        // alert(response.customButton);
+      } else {
+        // console.log('Response = ', response.assets[0].uri);
+        ImageResizer.createResizedImage(
+          response?.assets[0]?.uri,
+          640,
+          640,
+          'JPEG',
+          95,
+          0,
+          null,
+          false,
+          {mode: 'cover'},
+        )
+          .then(result => {
+            navigation.navigate('selectimagescreen', {
+              mediumImage: result.uri,
+              originalImage: response?.assets[0]?.uri,
+              mediumImageName: result.name,
+              originalImageName: response?.assets[0]?.uri.replace(
+                /^.*[\\\/]/,
+                '',
+              ),
+            });
+            dispatch(setindex(0));
+          })
+          .catch(error => {
+            Sentry.captureException(error.message);
+            SnackBarComponent('Please try again');
+          });
+      }
+    });
+  };
+  const ClickaPic2 = (name, id) => {
+    let options = {
+      storageOptions: {
+        skipBackup: true,
+        path: 'images',
+      },
+    };
+    ImagePicker.launchCamera(options, response => {
+      if (response.didCancel) {
+        //console.log('User cancelled image picker');
+      } else if (response.error) {
+        //console.log('ImagePicker Error: ', response.error);
+      } else if (response.customButton) {
+        // console.log('User tapped custom button: ', response.customButton);
+        // alert(response.customButton);
+      } else {
+        // console.log('Response = ', response.assets[0].uri);
+        dispatch(
+          Addreeldata({
+            reelname: name,
+            reelid: id,
+          }),
+        );
+        ImageResizer.createResizedImage(
+          response?.assets[0]?.uri,
+          640,
+          640,
+          'JPEG',
+          95,
+          0,
+          null,
+          false,
+          {mode: 'cover'},
+        )
+          .then(result => {
+            navigation.navigate('ReelView', {
+              mediumImage: result.uri,
+              originalImage: response?.assets[0]?.uri,
+              mediumImageName: result.name,
+              originalImageName: response?.assets[0]?.uri.replace(
+                /^.*[\\\/]/,
+                '',
+              ),
+            });
+            dispatch(setindex(0));
+          })
+          .catch(error => {
+            Sentry.captureException(error.message);
+            SnackBarComponent('Please try again');
+          });
+      }
+    });
+  };
   const setReel = (name, id) => {
     // set reel details to reducers
     dispatch(
@@ -365,6 +473,9 @@ export default function ShotoHome({navigation}) {
   };
   const goToUserProfile = () => {
     navigation.navigate('userprofile');
+  };
+  const exitApp = () => {
+    BackHandler.exitApp();
   };
 
   return (
@@ -442,6 +553,7 @@ export default function ShotoHome({navigation}) {
       )}
 
       <StatusBar backgroundColor="#1d2533" />
+
       {isLoading ? (
         reels?.length === 0 ? (
           <StartingHomePage />
@@ -450,6 +562,9 @@ export default function ShotoHome({navigation}) {
             <FlatList
               showsVerticalScrollIndicator={false}
               data={reels}
+              ListHeaderComponent={
+                !isSearch && <AllUserPhotosReelCard navigation={navigation} />
+              }
               initialNumToRender={5}
               onRefresh={onRefresh}
               refreshing={refreshing}
@@ -475,7 +590,7 @@ export default function ShotoHome({navigation}) {
         icon2={'camera-iris'}
         icon3={'ios-person-circle'}
         onIcon1Press={toggleOverlay}
-        onIcon2Press={takePhoto}
+        onIcon2Press={takePhoto2}
         onIcon3Press={goToUserProfile}
         check={'home'}
       />
@@ -485,6 +600,12 @@ export default function ShotoHome({navigation}) {
         addReel={addReel}
         setreelname={setreelname}
         reelname={reelname}
+      />
+      <OverLayComponent
+        visible={exitVisible}
+        toggleOverlay={exitToggleOverlay}
+        actionName={'Do you want to exit app ?'}
+        action={exitApp}
       />
     </KeyboardAvoidingView>
   );

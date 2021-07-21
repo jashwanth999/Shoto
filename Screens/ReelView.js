@@ -20,16 +20,17 @@ import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import {useFocusEffect} from '@react-navigation/native';
 import {RNS3} from 'react-native-aws3';
-import ImagePicker from 'react-native-image-crop-picker';
+import * as ImagePicker from 'react-native-image-picker';
 import Footer from '../Components/Footer.js';
 import Snackbar from 'react-native-snackbar';
 import ImageResizer from 'react-native-image-resizer';
 import * as Sentry from '@sentry/react-native';
 //import AWS from 'aws-sdk/dist/aws-sdk-react-native';
 import {Tooltip} from 'react-native-elements/dist/tooltip/Tooltip';
-import DeleteReelOverlay from '../Components/ReelViewComponents.js/DeleteReelOverlay.js';
+import DeleteOverlay from '../Components/ReelViewComponents.js/Delete.js';
 import ReelDeletionMenu from '../Components/ReelViewComponents.js/ReelDeletionMenu.js';
 import LoadingView from '../Components/ReelViewComponents.js/LoadingView.js';
+
 export default function ReelView({navigation, route}) {
   const width = Dimensions.get('window').width;
   const changed = useSelector(state => state.changed.changed);
@@ -105,9 +106,14 @@ export default function ReelView({navigation, route}) {
                 cloudMediumImage: response.body.postResponse.location,
                 isUploadedMedium: true,
               });
-
               uploadS3ToUserReels.set({
                 cloudMediumImage: response.body.postResponse.location,
+                reelid: reeldata.reelid,
+                timestamp: new Date(),
+                date: date.getHours() + ':' + date.getMinutes(),
+                uploadedby: user.email,
+                uploaderpropic: user.profilepic,
+                uploadername: user.username,
               });
             } catch (error) {
               uploadToS3Ref.update({
@@ -482,6 +488,52 @@ export default function ReelView({navigation, route}) {
     dispatch(setChange(!changed));
     navigation.navigate('Shotohome');
   };
+  const photo = () => {
+    let options = {
+      storageOptions: {
+        skipBackup: true,
+        path: 'images',
+      },
+    };
+    ImagePicker.launchCamera(options, response => {
+      if (response.didCancel) {
+        //console.log('User cancelled image picker');
+      } else if (response.error) {
+        //console.log('ImagePicker Error: ', response.error);
+      } else if (response.customButton) {
+        // console.log('User tapped custom button: ', response.customButton);
+        // alert(response.customButton);
+      } else {
+        // console.log('Response = ', response.assets[0].uri);
+        ImageResizer.createResizedImage(
+          response?.assets[0]?.uri,
+          640,
+          640,
+          'JPEG',
+          95,
+          0,
+          null,
+          false,
+          {mode: 'cover'},
+        )
+          .then(result => {
+            navigation.navigate('ReelView', {
+              mediumImage: result.uri,
+              originalImage: response?.assets[0]?.uri,
+              mediumImageName: result.name,
+              originalImageName: response?.assets[0]?.uri.replace(
+                /^.*[\\\/]/,
+                '',
+              ),
+            });
+          })
+          .catch(error => {
+            Sentry.captureException(error.message);
+            SnackBarComponent('Please try again');
+          });
+      }
+    });
+  };
 
   return (
     <View style={styles.container}>
@@ -564,13 +616,17 @@ export default function ReelView({navigation, route}) {
         icon2={'camera-iris'}
         icon3={'home'}
         onIcon1Press={goToAddScreen}
-        onIcon2Press={takePhoto}
+        onIcon2Press={photo}
         onIcon3Press={goToHome}
       />
-      <DeleteReelOverlay
-        deleteReel={deleteReel}
+      <DeleteOverlay
+        deleteAction={deleteReel}
         toggleOverlay={toggleOverlay}
         visible={visible}
+        deleteHead={'Delete Reel'}
+        deleteSubHead={'Other Contributors will still able to see the reel'}
+        height={170}
+        iconName={'table-column-remove'}
       />
     </View>
   );

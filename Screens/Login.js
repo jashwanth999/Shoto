@@ -151,7 +151,7 @@ export default function Login({navigation}) {
           source={require('../assets/shoto.png')}
           style={styles.shotologo}
         />
-        <Text style={styles.shoto}>Shotography:Clicking Together</Text>
+        <Text style={styles.shoto}>Click Together</Text>
 
         <TouchableOpacity
           activeOpacity={0.9}
