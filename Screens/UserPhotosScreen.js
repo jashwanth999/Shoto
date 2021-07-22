@@ -132,20 +132,18 @@ export default function UserPhotos({navigation}) {
       {!isLoading ? (
         <LoadingView />
       ) : (
-        <View>
-          <FlatList
-            initialNumToRender={10}
-            updateCellsBatchingPeriod={30}
-            ListHeaderComponent={<View style={{marginTop: 20}}></View>}
-            removeClippedSubviews={false}
-            onEndReachedThreshold={0.1}
-            showsVerticalScrollIndicator={false}
-            data={userPhotos}
-            renderItem={renderImage}
-            keyExtractor={item => item.imageid}
-            numColumns={numColumns}
-          />
-        </View>
+        <FlatList
+          initialNumToRender={10}
+          updateCellsBatchingPeriod={30}
+          ListHeaderComponent={<View style={{marginTop: 20}}></View>}
+          removeClippedSubviews={false}
+          onEndReachedThreshold={0.1}
+          showsVerticalScrollIndicator={false}
+          data={userPhotos}
+          renderItem={renderImage}
+          keyExtractor={item => item.imageid}
+          numColumns={numColumns}
+        />
       )}
       <DeleteOverlay
         deleteAction={deleteFromEveryWhere}

@@ -10,6 +10,7 @@ import {
   Platform,
   TextInput,
   Text,
+  PermissionsAndroid,
 } from 'react-native';
 import {Header, Avatar} from 'react-native-elements';
 import Reellist from '../Components/Reellist.js';
@@ -196,7 +197,7 @@ export default function ShotoHome({navigation}) {
           name={item.reellist?.reelname}
           navigation={navigation}
           t={new Date(item.reellist?.timestamp?.seconds * 1000).toUTCString()}
-          ClickaPic={ClickaPic2}
+          ClickaPic={takephoto}
           setReel={setReel}
         />
       );
@@ -268,187 +269,72 @@ export default function ShotoHome({navigation}) {
     setreelname('');
   };
 
-  // take photo it navigates to save image screen
-
-  const takePhoto = async () => {
-    ImagePicker.openCamera({
-      width: 300,
-      height: 400,
-    })
-      .then(image => {
-        ImageResizer.createResizedImage(
-          image.path,
-          640,
-          640,
-          'JPEG',
-          95,
-          0,
-          null,
-          false,
-          {mode: 'cover'},
-        )
-          .then(response => {
-            //console.log(response);
-            navigation.navigate('selectimagescreen', {
-              mediumImage: response.uri,
-              originalImage: image.path,
-              mediumImageName: response.name,
-              originalImageName: image.path.replace(/^.*[\\\/]/, ''),
-            });
-
-            dispatch(setindex(0));
-          })
-          .catch(error => {
-            Sentry.captureException(error.message);
-            SnackBarComponent('Photo not uploaded please retry');
-          });
+  const resizeImage = (name, id, navigateScreenName, response) => {
+    ImageResizer.createResizedImage(
+      response?.assets[0]?.uri,
+      640,
+      640,
+      'JPEG',
+      95,
+      0,
+      null,
+      false,
+      {mode: 'cover'},
+    )
+      .then(result => {
+        navigation.navigate(navigateScreenName, {
+          mediumImage: result.uri,
+          originalImage: response?.assets[0]?.uri,
+          mediumImageName: result.name,
+          originalImageName: response?.assets[0]?.uri.replace(/^.*[\\\/]/, ''),
+        });
+        dispatch(setindex(0));
       })
-      .catch(err => {
-        // Here you handle if the user cancels or any other errors
-        //console.log('cancelled');
+      .catch(error => {
+        Sentry.captureException(error.message);
+        SnackBarComponent('Please try again');
       });
   };
-  const ClickaPic = (name, id) => {
-    ImagePicker.openCamera({
-      width: 300,
-      height: 400,
-    })
-      .then(image => {
-        dispatch(
-          Addreeldata({
-            reelname: name,
-            reelid: id,
-          }),
-        );
-        ImageResizer.createResizedImage(
-          image.path,
-          640,
-          640,
-          'JPEG',
-          95,
-          0,
-          null,
-          false,
-          {mode: 'cover'},
-        )
-          .then(response => {
-            //console.log(response);
-            navigation.navigate('ReelView', {
-              mediumImage: response.uri,
-              originalImage: image.path,
-              mediumImageName: response.name,
-              originalImageName: image.path.replace(/^.*[\\\/]/, ''),
-            });
+  const lauchCamera = (name, id, navigateScreenName) => {
+    let options = {
+      storageOptions: {
+        skipBackup: true,
+        path: 'images',
+      },
+    };
+    ImagePicker.launchCamera(options, response => {
+      if (response.didCancel) {
+      } else if (response.error) {
+        Sentry.captureMessage(response.error);
+      } else if (response.customButton) {
+      } else {
+        resizeImage(name, id, navigateScreenName, response);
+      }
+    });
+  };
 
-            dispatch(setindex(0));
-          })
-          .catch(error => {
-            Sentry.captureException(error.message);
-            SnackBarComponent('Photo not uploaded please retry');
-          });
-      })
-      .catch(error => {});
+  const takephoto = (name, id, navigateScreenName) => {
+    if (Platform.OS === 'android') {
+      PermissionsAndroid.requestMultiple([
+        PermissionsAndroid.PERMISSIONS.CAMERA,
+        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+      ])
+        .then(result => {
+          if (
+            result['android.permission.CAMERA'] &&
+            result['android.permission.READ_EXTERNAL_STORAGE'] &&
+            result['android.permission.WRITE_EXTERNAL_STORAGE'] === 'granted'
+          ) {
+            lauchCamera(name, id, navigateScreenName);
+          }
+        })
+        .catch(error => {
+          Sentry.captureMessage(error.message);
+        });
+    }
   };
-  const takePhoto2 = () => {
-    let options = {
-      storageOptions: {
-        skipBackup: true,
-        path: 'images',
-      },
-    };
-    ImagePicker.launchCamera(options, response => {
-      if (response.didCancel) {
-        //console.log('User cancelled image picker');
-      } else if (response.error) {
-        //console.log('ImagePicker Error: ', response.error);
-      } else if (response.customButton) {
-        // console.log('User tapped custom button: ', response.customButton);
-        // alert(response.customButton);
-      } else {
-        // console.log('Response = ', response.assets[0].uri);
-        ImageResizer.createResizedImage(
-          response?.assets[0]?.uri,
-          640,
-          640,
-          'JPEG',
-          95,
-          0,
-          null,
-          false,
-          {mode: 'cover'},
-        )
-          .then(result => {
-            navigation.navigate('selectimagescreen', {
-              mediumImage: result.uri,
-              originalImage: response?.assets[0]?.uri,
-              mediumImageName: result.name,
-              originalImageName: response?.assets[0]?.uri.replace(
-                /^.*[\\\/]/,
-                '',
-              ),
-            });
-            dispatch(setindex(0));
-          })
-          .catch(error => {
-            Sentry.captureException(error.message);
-            SnackBarComponent('Please try again');
-          });
-      }
-    });
-  };
-  const ClickaPic2 = (name, id) => {
-    let options = {
-      storageOptions: {
-        skipBackup: true,
-        path: 'images',
-      },
-    };
-    ImagePicker.launchCamera(options, response => {
-      if (response.didCancel) {
-        //console.log('User cancelled image picker');
-      } else if (response.error) {
-        //console.log('ImagePicker Error: ', response.error);
-      } else if (response.customButton) {
-        // console.log('User tapped custom button: ', response.customButton);
-        // alert(response.customButton);
-      } else {
-        // console.log('Response = ', response.assets[0].uri);
-        dispatch(
-          Addreeldata({
-            reelname: name,
-            reelid: id,
-          }),
-        );
-        ImageResizer.createResizedImage(
-          response?.assets[0]?.uri,
-          640,
-          640,
-          'JPEG',
-          95,
-          0,
-          null,
-          false,
-          {mode: 'cover'},
-        )
-          .then(result => {
-            navigation.navigate('ReelView', {
-              mediumImage: result.uri,
-              originalImage: response?.assets[0]?.uri,
-              mediumImageName: result.name,
-              originalImageName: response?.assets[0]?.uri.replace(
-                /^.*[\\\/]/,
-                '',
-              ),
-            });
-            dispatch(setindex(0));
-          })
-          .catch(error => {
-            Sentry.captureException(error.message);
-            SnackBarComponent('Please try again');
-          });
-      }
-    });
-  };
+
   const setReel = (name, id) => {
     // set reel details to reducers
     dispatch(
@@ -590,9 +476,12 @@ export default function ShotoHome({navigation}) {
         icon2={'camera-iris'}
         icon3={'ios-person-circle'}
         onIcon1Press={toggleOverlay}
-        onIcon2Press={takePhoto2}
+        onIcon2Press={takephoto}
         onIcon3Press={goToUserProfile}
         check={'home'}
+        reelName={''}
+        reelId={''}
+        navigateScreenName={'SelectReelScreen'}
       />
       <Modal
         visible={visible}

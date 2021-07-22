@@ -5,9 +5,11 @@ import {useSelector} from 'react-redux';
 import firestore from '@react-native-firebase/firestore';
 import ContributorsView from './ReelListComponents/ContributorsView.js';
 import ImageThumbnail from './ReelListComponents/ReelImageThumbNail';
+import {useDispatch} from 'react-redux';
+import {Addreeldata} from '../actions.js';
 export default function Reellist({name, id, t, setReel, ClickaPic}) {
   const db = firestore();
-  // const dispatch = useDispatch();
+  const dispatch = useDispatch();
   const [reelusers, setreelusers] = useState([]);
   const [images, setimages] = useState([]);
   const user = useSelector(state => state.user.user);
@@ -87,7 +89,8 @@ export default function Reellist({name, id, t, setReel, ClickaPic}) {
         <ContributorsView reelUsers={reelusers} />
         <TouchableOpacity
           onPress={() => {
-            ClickaPic(name, id);
+            dispatch(Addreeldata({reelname: name, reelid: id}));
+            ClickaPic(name, id, 'ReelView');
           }}
           style={styles.clickaPicButton}>
           <Text style={styles.clickaPicButtonText}>CLICK</Text>
