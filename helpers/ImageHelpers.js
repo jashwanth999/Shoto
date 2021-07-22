@@ -4,22 +4,17 @@ import * as ImagePicker from 'react-native-image-picker';
 import ImageResizer from 'react-native-image-resizer';
 
 export const getImages = async () => {
-  const permissions = await getPermissions();
-  if (permissions) {
-    try {
-      const orginalImageResponse = await getCameraImage();
-      const mediumImageResponse = await imageResize(orginalImageResponse);
-      return {
-        mediumImage: mediumImageResponse.uri,
-        originalImage: orginalImageResponse?.assets[0]?.uri,
-        mediumImageName: mediumImageResponse.name,
-        originalImageName: orginalImageResponse?.assets[0]?.uri.replace(/^.*[\\\/]/, '',),
-      }
-    } catch (error) {
-      Sentry.captureMessage(error.message);
-      return false;
-    }
-  }
+    const permissions = await getPermissions();
+    if (permissions) {
+        const orginalImageResponse = await getCameraImage();
+        const mediumImageResponse = await imageResize(orginalImageResponse);
+        return {
+          mediumImage: mediumImageResponse.uri,
+          originalImage: orginalImageResponse?.assets[0]?.uri,
+          mediumImageName: mediumImageResponse.name,
+          originalImageName: orginalImageResponse?.assets[0]?.uri.replace(/^.*[\\\/]/, '',),
+        };
+    } else { throw "Insufficient Permissions" }
 }
 
 const getPermissions = async () =>  {
@@ -59,10 +54,9 @@ const getCameraImage = () => {
   });
 };
 
-const imageResize = async response => {
-  try {
-    const result = await ImageResizer.createResizedImage(
-      response?.assets[0]?.uri,
+const imageResize = async image => {
+   return await ImageResizer.createResizedImage(
+      image?.assets[0]?.uri,
       640,
       640,
       'JPEG',
@@ -72,8 +66,4 @@ const imageResize = async response => {
       false,
       {mode: 'cover'},
     );
-    return result;
-  } catch (error) {
-    Sentry.captureMessage(error.message);
-  }
 };
