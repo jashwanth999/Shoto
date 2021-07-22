@@ -34,7 +34,7 @@ import Modal from '../Components/ReelModal';
 import Loading from '../Components/Loading';
 import AllUserPhotosReelCard from '../Components/ShotoHomeComponents/AllUserPhotosReelCard.js';
 import OverLayComponent from '../Components/UserProfileComponents/OverLayComponent.js';
-import {takePhoto} from '../helpers/ImageHelper.js';
+import {getImages} from '../helpers/ImageHelpers.js';
 const wait = timeout => {
   return new Promise(resolve => setTimeout(resolve, timeout));
 };
@@ -57,6 +57,17 @@ export default function ShotoHome({navigation}) {
 
   const [LastPosition, setLastPosition] = useState(false);
   const [exitVisible, setExitVisibleAlert] = useState(false);
+
+  const takePhoto = async() => {
+    try {
+      result = await getImages();
+      if (result) {
+        navigation.navigate("ReelView" , result)
+      } 
+    } catch (error) {
+      Sentry.captureMessage(error.message);
+    }
+  }
 
   const exitToggleOverlay = () => {
     setExitVisibleAlert(!exitVisible);
