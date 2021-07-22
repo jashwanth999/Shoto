@@ -22,20 +22,19 @@ import {
   Adduser,
   reelNameAction,
   setChange,
-  setindex,
 } from '../actions.js';
 import {useFocusEffect} from '@react-navigation/native';
 import Footer from '../Components/Footer.js';
 import firestore from '@react-native-firebase/firestore';
 import StartingHomePage from './StartingHomePage.js';
-import * as ImagePicker from 'react-native-image-picker';
-import ImageResizer from 'react-native-image-resizer';
+
 import Snackbar from 'react-native-snackbar';
 import * as Sentry from '@sentry/react-native';
 import Modal from '../Components/ReelModal';
 import Loading from '../Components/Loading';
 import AllUserPhotosReelCard from '../Components/ShotoHomeComponents/AllUserPhotosReelCard.js';
 import OverLayComponent from '../Components/UserProfileComponents/OverLayComponent.js';
+import {takePhoto} from '../helpers/ImageHelper.js';
 const wait = timeout => {
   return new Promise(resolve => setTimeout(resolve, timeout));
 };
@@ -197,8 +196,9 @@ export default function ShotoHome({navigation}) {
           name={item.reellist?.reelname}
           navigation={navigation}
           t={new Date(item.reellist?.timestamp?.seconds * 1000).toUTCString()}
-          ClickaPic={takephoto}
+          ClickaPic={takePhoto}
           setReel={setReel}
+        
         />
       );
     }
@@ -267,72 +267,6 @@ export default function ShotoHome({navigation}) {
       SnackBarComponent('Reelname already exist please change the reelname');
     }
     setreelname('');
-  };
-
-  const resizeImage = (name, id, navigateScreenName, response) => {
-    ImageResizer.createResizedImage(
-      response?.assets[0]?.uri,
-      640,
-      640,
-      'JPEG',
-      95,
-      0,
-      null,
-      false,
-      {mode: 'cover'},
-    )
-      .then(result => {
-        navigation.navigate(navigateScreenName, {
-          mediumImage: result.uri,
-          originalImage: response?.assets[0]?.uri,
-          mediumImageName: result.name,
-          originalImageName: response?.assets[0]?.uri.replace(/^.*[\\\/]/, ''),
-        });
-        dispatch(setindex(0));
-      })
-      .catch(error => {
-        Sentry.captureException(error.message);
-        SnackBarComponent('Please try again');
-      });
-  };
-  const lauchCamera = (name, id, navigateScreenName) => {
-    let options = {
-      storageOptions: {
-        skipBackup: true,
-        path: 'images',
-      },
-    };
-    ImagePicker.launchCamera(options, response => {
-      if (response.didCancel) {
-      } else if (response.error) {
-        Sentry.captureMessage(response.error);
-      } else if (response.customButton) {
-      } else {
-        resizeImage(name, id, navigateScreenName, response);
-      }
-    });
-  };
-
-  const takephoto = (name, id, navigateScreenName) => {
-    if (Platform.OS === 'android') {
-      PermissionsAndroid.requestMultiple([
-        PermissionsAndroid.PERMISSIONS.CAMERA,
-        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-      ])
-        .then(result => {
-          if (
-            result['android.permission.CAMERA'] &&
-            result['android.permission.READ_EXTERNAL_STORAGE'] &&
-            result['android.permission.WRITE_EXTERNAL_STORAGE'] === 'granted'
-          ) {
-            lauchCamera(name, id, navigateScreenName);
-          }
-        })
-        .catch(error => {
-          Sentry.captureMessage(error.message);
-        });
-    }
   };
 
   const setReel = (name, id) => {
@@ -476,7 +410,7 @@ export default function ShotoHome({navigation}) {
         icon2={'camera-iris'}
         icon3={'ios-person-circle'}
         onIcon1Press={toggleOverlay}
-        onIcon2Press={takephoto}
+        onIcon2Press={takePhoto}
         onIcon3Press={goToUserProfile}
         check={'home'}
         reelName={''}

@@ -20,17 +20,15 @@ import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import {useFocusEffect} from '@react-navigation/native';
 import {RNS3} from 'react-native-aws3';
-import * as ImagePicker from 'react-native-image-picker';
 import Footer from '../Components/Footer.js';
 import Snackbar from 'react-native-snackbar';
-import ImageResizer from 'react-native-image-resizer';
 import * as Sentry from '@sentry/react-native';
 import {Tooltip} from 'react-native-elements/dist/tooltip/Tooltip';
 import DeleteOverlay from '../Components/ReelViewComponents.js/Delete.js';
 import ReelDeletionMenu from '../Components/ReelViewComponents.js/ReelDeletionMenu.js';
 import LoadingView from '../Components/ReelViewComponents.js/LoadingView.js';
-import {PermissionsAndroid} from 'react-native';
-import {Platform} from 'react-native';
+import { takePhoto } from '../helpers/ImageHelper.js';
+
 
 export default function ReelView({navigation, route}) {
   const width = Dimensions.get('window').width;
@@ -370,38 +368,7 @@ export default function ReelView({navigation, route}) {
       );
     }
   }, []);
-  const takePhoto = () => {
-    ImagePicker.openCamera({
-      width: 300,
-      height: 400,
-    })
-      .then(image => {
-        ImageResizer.createResizedImage(
-          image.path,
-          640,
-          640,
-          'JPEG',
-          95,
-          0,
-          null,
-          false,
-          {mode: 'cover'},
-        )
-          .then(response => {
-            navigation.navigate('ReelView', {
-              mediumImage: response.uri,
-              originalImage: image.path,
-              mediumImageName: response.name,
-              originalImageName: image.path.replace(/^.*[\\\/]/, ''),
-            });
-          })
-          .catch(error => {
-            Sentry.captureException(error.message);
-            SnackBarComponent('Please try again');
-          });
-      })
-      .catch(error => {});
-  };
+  
   const SnackBarComponent = message => {
     return Snackbar.show({
       text: message,
@@ -489,74 +456,7 @@ export default function ReelView({navigation, route}) {
     dispatch(setChange(!changed));
     navigation.navigate('Shotohome');
   };
-  const resizeImage = (name, id, navigateScreenName, response) => {
-    ImageResizer.createResizedImage(
-      response?.assets[0]?.uri,
-      640,
-      640,
-      'JPEG',
-      95,
-      0,
-      null,
-      false,
-      {mode: 'cover'},
-    )
-      .then(result => {
-        
-      
-        navigation.navigate(navigateScreenName, {
-          mediumImage: result.uri,
-          originalImage: response?.assets[0]?.uri,
-          mediumImageName: result.name,
-          originalImageName: response?.assets[0]?.uri.replace(/^.*[\\\/]/, ''),
-        });
-        dispatch(setindex(0));
-      })
-      .catch(error => {
-        Sentry.captureException(error.message);
-        SnackBarComponent('Please try again');
-      });
-  };
-  const lauchCamera = (name, id, navigateScreenName) => {
-    let options = {
-      storageOptions: {
-        skipBackup: true,
-        path: 'images',
-      },
-    };
-    ImagePicker.launchCamera(options, response => {
-      if (response.didCancel) {
-      } else if (response.error) {
-        Sentry.captureMessage(response.error);
-      } else if (response.customButton) {
-      } else {
-        resizeImage(name, id, navigateScreenName, response);
-        console.log(name, id, navigateScreenName);
-      }
-    });
-  };
 
-  const takephoto = (name, id, navigateScreenName) => {
-    if (Platform.OS === 'android') {
-      PermissionsAndroid.requestMultiple([
-        PermissionsAndroid.PERMISSIONS.CAMERA,
-        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-      ])
-        .then(result => {
-          if (
-            result['android.permission.CAMERA'] &&
-            result['android.permission.READ_EXTERNAL_STORAGE'] &&
-            result['android.permission.WRITE_EXTERNAL_STORAGE'] === 'granted'
-          ) {
-            lauchCamera(name, id, navigateScreenName);
-          }
-        })
-        .catch(error => {
-          Sentry.captureMessage(error.message);
-        });
-    }
-  };
   return (
     <View style={styles.container}>
       <Header
@@ -638,7 +538,7 @@ export default function ReelView({navigation, route}) {
         icon2={'camera-iris'}
         icon3={'home'}
         onIcon1Press={goToAddScreen}
-        onIcon2Press={takephoto}
+        onIcon2Press={takePhoto}
         onIcon3Press={goToHome}
         reelName={reeldata.reelname}
         reelId={reeldata.reelid}

@@ -7,7 +7,7 @@ import ContributorsView from './ReelListComponents/ContributorsView.js';
 import ImageThumbnail from './ReelListComponents/ReelImageThumbNail';
 import {useDispatch} from 'react-redux';
 import {Addreeldata} from '../actions.js';
-export default function Reellist({name, id, t, setReel, ClickaPic}) {
+export default function Reellist({name, id, t, setReel, ClickaPic,navigation}) {
   const db = firestore();
   const dispatch = useDispatch();
   const [reelusers, setreelusers] = useState([]);
@@ -90,7 +90,7 @@ export default function Reellist({name, id, t, setReel, ClickaPic}) {
         <TouchableOpacity
           onPress={() => {
             dispatch(Addreeldata({reelname: name, reelid: id}));
-            ClickaPic(name, id, 'ReelView');
+            ClickaPic(navigation, 'ReelView');
           }}
           style={styles.clickaPicButton}>
           <Text style={styles.clickaPicButtonText}>CLICK</Text>
