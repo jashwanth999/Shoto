@@ -14,14 +14,17 @@ export const takePhoto = async (navigation, navigateScreenName) => {
       permission['android.permission.READ_EXTERNAL_STORAGE'] === 'granted' &&
       permission['android.permission.WRITE_EXTERNAL_STORAGE'] === 'granted'
     ) {
-      const response = await lauchCamera();
-      const result = await imageResize(response);
-      if (response && result) {
+      const orginalImageResponse = await lauchCamera();
+      const mediumImageResponse = await imageResize(orginalImageResponse);
+      if (orginalImageResponse && mediumImageResponse) {
         navigation.navigate(navigateScreenName, {
-          mediumImage: result.uri,
-          originalImage: response?.assets[0]?.uri,
-          mediumImageName: result.name,
-          originalImageName: response?.assets[0]?.uri.replace(/^.*[\\\/]/, ''),
+          mediumImage: mediumImageResponse.uri,
+          originalImage: orginalImageResponse?.assets[0]?.uri,
+          mediumImageName: mediumImageResponse.name,
+          originalImageName: orginalImageResponse?.assets[0]?.uri.replace(
+            /^.*[\\\/]/,
+            '',
+          ),
         });
       }
     }
