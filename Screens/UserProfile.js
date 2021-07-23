@@ -1,11 +1,10 @@
-import React, {useState} from 'react';
+import React, {useState, useCallback, useEffect} from 'react';
 import {
   StyleSheet,
   Text,
   View,
-  ScrollView,
-  TextInput,
   TouchableOpacity,
+  FlatList,
 } from 'react-native';
 import {Avatar} from 'react-native-elements';
 import {Ionicons, MaterialCommunityIcons} from '../Styles/Icons';
@@ -16,8 +15,17 @@ import {Addreel, Adduser} from '../actions';
 import auth from '@react-native-firebase/auth';
 import OverLayComponent from '../Components/UserProfileComponents/OverLayComponent';
 import HelloComponent from '../Components/UserProfileComponents/HelloComponent';
-
+import FastImage from 'react-native-fast-image';
+import {createImageProgress} from 'react-native-image-progress';
+import {Dimensions} from 'react-native';
+import firestore from '@react-native-firebase/firestore';
+import {ActivityIndicator} from 'react-native';
 function UserProfile({navigation}) {
+  const Image = createImageProgress(FastImage);
+  const db = firestore();
+  const reelnames = useSelector(state => state.reelnames.Reelnames);
+  const numColumns = 3;
+  const size = (Dimensions.get('window').width - 15) / numColumns;
   GoogleSignin.configure({
     scopes: [], // what API you want to access on behalf of the user, default is email and profile
     webClientId:
@@ -47,21 +55,108 @@ function UserProfile({navigation}) {
       });
   };
 
-  return (
-    <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
-      <View style={styles.header}>
-        <HelloComponent />
-        <Text style={styles.userNameText}>{user?.username}</Text>
-        <TouchableOpacity
-          onPress={() => {
-            navigation.navigate('Shotohome');
-          }}
-          style={styles.backButtonView}>
-          <Ionicons name="chevron-back" color="#d4d4d4" size={21} />
-          <Text style={styles.backButtonText}>Back</Text>
-        </TouchableOpacity>
-      </View>
+  const [isLoading, setIsLoading] = useState(false);
 
+  const [userPhotos, setUserPhotos] = useState([]);
+
+  useEffect(() => {
+    db.collection('user_reels')
+      .doc(user?.email)
+      .collection('AllUserPhotos')
+      .orderBy('timestamp', 'desc')
+      .onSnapshot(snapshot => {
+        setUserPhotos(
+          snapshot.docs.map(doc => ({
+            imageid: doc.id,
+            images: doc.data(),
+          })),
+        );
+        setIsLoading(true);
+      });
+  }, [user?.email]);
+  const renderImage = useCallback(({item, index}) => {
+    //const t = new Date(item.images?.timestamp?.seconds * 1000).toUTCString();
+
+    return (
+      <TouchableOpacity
+        onPress={() => {
+          navigation.navigate('Photoview', {
+            cloudOriginalImage: item.images.cloudMediumImage,
+            timestamp: new Date(
+              item.images?.timestamp?.seconds * 1000,
+            ).toUTCString(),
+            time: item.images?.date,
+          });
+        }}>
+        <Image
+          resizeMode="cover"
+          style={[styles.image, {height: size, width: size}]}
+          source={{
+            uri: item.images.cloudMediumImage,
+          }}
+        />
+      </TouchableOpacity>
+    );
+  }, []);
+  return (
+    <View showsVerticalScrollIndicator={false} style={styles.container}>
+      <View style={styles.header}>
+        <View
+          style={{flexDirection: 'row', alignItems: 'center', marginTop: 10}}>
+          <View style={styles.avatarView}>
+            <Avatar
+              source={{
+                uri: user?.profilepic,
+              }}
+              size={70}
+              rounded
+            />
+          </View>
+          <View
+            style={{
+              flexDirection: 'column',
+            }}>
+            <HelloComponent />
+            <Text style={styles.userNameText}>{user?.username}</Text>
+          </View>
+        </View>
+        <Text
+          style={{
+            position: 'absolute',
+            bottom: 10,
+            color: '#d4d4d4',
+            fontSize: 14,
+          }}>
+          {reelnames.length} reels - {userPhotos.length} Photos
+        </Text>
+      </View>
+      {!isLoading ? (
+        <View>
+          <ActivityIndicator color="#d4d4d4" />
+        </View>
+      ) : (
+        <FlatList
+          initialNumToRender={10}
+          updateCellsBatchingPeriod={30}
+          ListHeaderComponent={<View style={{marginTop: 10}}></View>}
+          removeClippedSubviews={false}
+          onEndReachedThreshold={0.1}
+          showsVerticalScrollIndicator={false}
+          data={userPhotos}
+          renderItem={renderImage}
+          keyExtractor={item => item.imageid}
+          numColumns={numColumns}
+        />
+      )}
+
+      <TouchableOpacity
+        onPress={() => {
+          navigation.navigate('Shotohome');
+        }}
+        style={styles.backButtonView}>
+        <Ionicons name="chevron-back" color="#d4d4d4" size={21} />
+        <Text style={styles.backButtonText}>Back</Text>
+      </TouchableOpacity>
       <TouchableOpacity
         style={styles.logoutIconButton}
         onPress={() => {
@@ -69,72 +164,34 @@ function UserProfile({navigation}) {
         }}>
         <MaterialCommunityIcons name="logout" color="white" size={22} />
       </TouchableOpacity>
-
-      <View style={styles.avatarView}>
-        <Avatar
-          source={{
-            uri: user?.profilepic,
-          }}
-          size={100}
-          rounded
-        />
-      </View>
-      <View style={{marginTop: 52}}>
-        <View style={styles.textInputView}>
-          <MaterialCommunityIcons
-            name={'account'}
-            size={20}
-            color="rgba(29, 37, 51, 1)"
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Type Here ..."
-            color="#d4d4d4"
-          />
-        </View>
-        <View style={styles.textInputView}>
-          <MaterialCommunityIcons
-            name="phone"
-            size={20}
-            color="rgba(29, 37, 51, 1)"
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="+91 99999 99999"
-            color="#d4d4d4"
-          />
-        </View>
-      </View>
-      <View style={styles.saveView}>
-        <TouchableOpacity style={styles.saveContainer}>
-          <Text style={styles.caption}>Save</Text>
-        </TouchableOpacity>
-      </View>
       <OverLayComponent
         visible={visible}
         toggleOverlay={toggleOverlay}
         actionName={'Do you want to logout ?'}
         action={signOut}
       />
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: 'black',
   },
   header: {
     backgroundColor: 'rgba(29, 37, 51, 1)',
-    height: 230,
+    height: 220,
     alignItems: 'center',
     justifyContent: 'center',
   },
   userNameText: {
     alignSelf: 'center',
     color: '#d4d4d4',
-    fontSize: 24,
-    marginTop: 10,
+    fontSize: 16,
+    marginTop: 6,
+    alignSelf: 'flex-start',
+    marginLeft: 5,
   },
 
   materialButton: {
@@ -145,7 +202,10 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(212,212,212,1)',
     margin: 20,
   },
-
+  avatarView: {
+    marginRight: 18,
+    marginTop: 10,
+  },
   input: {
     flex: 1,
   },
@@ -153,22 +213,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
   },
-  saveContainer: {
-    backgroundColor: '#27364b',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 2,
-    width: '40%',
-    height: 40,
-  },
-  textInputView: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderBottomWidth: 0.25,
-    borderBottomColor: 'rgba(29, 37, 51, 1)',
-    marginLeft: 20,
-    marginRight: 20,
-  },
+
   backButtonView: {
     display: 'flex',
     flexDirection: 'row',
@@ -180,12 +225,7 @@ const styles = StyleSheet.create({
     color: '#d4d4d4',
     fontSize: 15,
   },
-  avatarView: {
-    width: '100%',
-    alignItems: 'center',
-    position: 'absolute',
-    top: '40%',
-  },
+
   saveView: {
     width: '100%',
     alignItems: 'center',
@@ -195,6 +235,37 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 10,
     top: 40,
+  },
+  imagesView: {
+    marginRight: 3,
+  },
+  allUserPhotoText: {
+    color: '#d4d4d4',
+    fontSize: 18,
+  },
+  leftHeader: {
+    display: 'flex',
+    flexDirection: 'row',
+    marginTop: 4,
+  },
+  homeText: {
+    color: '#d4d4d4',
+    fontSize: 15,
+  },
+  image: {
+    margin: 2,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  text: {
+    color: '#d4d4d4',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 20,
+  },
+  allYourPhotosView: {
+    marginTop: 30,
+    marginBottom: 15,
   },
 });
 

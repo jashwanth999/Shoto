@@ -19,6 +19,7 @@ export default function AllUserPhotosReelCard({navigation}) {
     db.collection('user_reels')
       .doc(user?.email)
       .collection('AllUserPhotos')
+      .orderBy('timestamp', 'desc')
       .limit(8)
       .onSnapshot(snapshot => {
         setUserPhotos(
@@ -126,8 +127,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 2,
-    marginRight:10
-
+    marginRight: 10,
   },
   moreButtonText: {
     // color: "rgba(212, 212, 212, 0.6)",
@@ -141,7 +141,6 @@ const styles = StyleSheet.create({
   },
   moreButtonView: {
     flexDirection: 'row-reverse',
-    marginBottom:5,
-   
+    marginBottom: 5,
   },
 });

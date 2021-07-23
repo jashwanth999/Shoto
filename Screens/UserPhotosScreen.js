@@ -58,7 +58,7 @@ export default function UserPhotos({navigation}) {
       });
   }, [user?.email]);
   const renderImage = useCallback(({item, index}) => {
-    const t = new Date(item.images?.timestamp?.seconds * 1000).toUTCString();
+    //const t = new Date(item.images?.timestamp?.seconds * 1000).toUTCString();
 
     return (
       <TouchableOpacity
