@@ -23,7 +23,7 @@ export default Footer = props => {
       <TouchableOpacity
         activeOpacity={0.5}
         onPress={() => {
-          props.onIcon2Press(props.navigation, props.navigateScreenName);
+          props.onIcon2Press(props.navigateScreenName);
         }}
         style={styles.middleIcon}>
         <MaterialCommunityIcons name={props.icon2} color="#d4d4d4" size={34} />

@@ -58,16 +58,16 @@ export default function ShotoHome({navigation}) {
   const [LastPosition, setLastPosition] = useState(false);
   const [exitVisible, setExitVisibleAlert] = useState(false);
 
-  const takePhoto = async() => {
+  const takePhoto = async navigateScreenName => {
     try {
       result = await getImages();
       if (result) {
-        navigation.navigate("ReelView" , result)
-      } 
+        navigation.navigate(navigateScreenName, result);
+      }
     } catch (error) {
       Sentry.captureMessage(error.message);
     }
-  }
+  };
 
   const exitToggleOverlay = () => {
     setExitVisibleAlert(!exitVisible);
@@ -209,7 +209,6 @@ export default function ShotoHome({navigation}) {
           t={new Date(item.reellist?.timestamp?.seconds * 1000).toUTCString()}
           ClickaPic={takePhoto}
           setReel={setReel}
-        
         />
       );
     }

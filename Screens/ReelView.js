@@ -27,8 +27,7 @@ import {Tooltip} from 'react-native-elements/dist/tooltip/Tooltip';
 import DeleteOverlay from '../Components/ReelViewComponents.js/Delete.js';
 import ReelDeletionMenu from '../Components/ReelViewComponents.js/ReelDeletionMenu.js';
 import LoadingView from '../Components/ReelViewComponents.js/LoadingView.js';
-import { takePhoto } from '../helpers/ImageHelper.js';
-
+import { getImages } from '../helpers/ImageHelpers.js';
 
 export default function ReelView({navigation, route}) {
   const width = Dimensions.get('window').width;
@@ -39,6 +38,16 @@ export default function ReelView({navigation, route}) {
   const user = useSelector(state => state.user.user);
   const date = new Date();
   // get details of reels stored in reducers
+  const takePhoto = async navigateScreenName => {
+    try {
+      result = await getImages();
+      if (result) {
+        navigation.navigate(navigateScreenName, result);
+      }
+    } catch (error) {
+      Sentry.captureMessage(error.message);
+    }
+  };
 
   const reeldata = useSelector(state => state.reeldata.reeldata);
   const [spinner, setSpinner] = useState(false);
@@ -368,7 +377,7 @@ export default function ReelView({navigation, route}) {
       );
     }
   }, []);
-  
+
   const SnackBarComponent = message => {
     return Snackbar.show({
       text: message,
