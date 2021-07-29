@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {View, StyleSheet, Text} from 'react-native';
+import {View, StyleSheet} from 'react-native';
 import {TouchableOpacity} from 'react-native';
 import FastImage from 'react-native-fast-image';
 import {createImageProgress} from 'react-native-image-progress';
@@ -76,20 +76,10 @@ export default function imagecard({
     };
 
     const optionsForMedium = {
-      keyPrefix: `uploads/${currentUser.uid}/`,
-      bucket: 'shoto-resized-production',
-      region: 'ap-south-1',
-      accessKey: 'AKIAR77UFFI6JWKBCVUU',
-      secretKey: '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',
-      successActionStatus: 201,
+   
     };
     const optionsForOriginal = {
-      keyPrefix: `uploads/${currentUser.uid}/`,
-      bucket: 'shotoclick',
-      region: 'ap-south-1',
-      accessKey: 'AKIAR77UFFI6JWKBCVUU',
-      secretKey: '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',
-      successActionStatus: 201,
+    
     };
     let uploadToS3Ref = db
       .collection('reels')

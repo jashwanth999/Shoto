@@ -13,7 +13,6 @@ export default function Reellist({
   t,
   setReel,
   ClickaPic,
-  navigation,
 }) {
   const db = firestore();
   const dispatch = useDispatch();

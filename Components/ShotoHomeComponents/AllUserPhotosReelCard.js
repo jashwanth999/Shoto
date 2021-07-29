@@ -54,7 +54,6 @@ export default function AllUserPhotosReelCard({navigation}) {
         <View style={styles.titleContainer}>
           <Text style={styles.titleText}>All Photos</Text>
         </View>
-
         <View style={styles.thumbnailsContainer}>
           <FlatList
             initialNumToRender={10}

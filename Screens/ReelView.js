@@ -177,18 +177,18 @@ export default function ReelView({navigation, route}) {
     };
     const optionsForMedium = {
       keyPrefix: `uploads/${currentUser.uid}/`,
-      bucket: 'shoto-resized-production',
+      bucket: '',
       region: 'ap-south-1',
-      accessKey: 'AKIAR77UFFI6JWKBCVUU',
-      secretKey: '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',
+      accessKey: '',
+      secretKey: '',
       successActionStatus: 201,
     };
     const optionsForOriginal = {
       keyPrefix: `uploads/${currentUser.uid}/`,
-      bucket: 'shotoclick',
+      bucket: '',
       region: 'ap-south-1',
-      accessKey: 'AKIAR77UFFI6JWKBCVUU',
-      secretKey: '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',
+      accessKey: '',
+      secretKey: '',
       successActionStatus: 201,
     };
     rns3Upload(mediumImageFile, optionsForMedium, imageid, 'medium');

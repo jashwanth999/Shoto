@@ -59,5 +59,7 @@ buck-out/
 /ios/Pods/
 
 android/*.hprof
+android/app/*.keystore
+
 
 
