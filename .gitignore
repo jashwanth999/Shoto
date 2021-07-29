@@ -21,6 +21,7 @@ DerivedData
 *.ipa
 *.xcuserstate
 
+
 # Android/IntelliJ
 #
 build/
@@ -28,6 +29,8 @@ build/
 .gradle
 local.properties
 *.iml
+*.aab
+*.apk
 
 # node.js
 #
@@ -59,7 +62,7 @@ buck-out/
 /ios/Pods/
 
 android/*.hprof
-android/app/*.keystore
+
 
 
 
